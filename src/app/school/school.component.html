@@ -1,0 +1,23 @@
+<nz-spin [nzSpinning]="loading">
+  <div class="schools-container">
+    <h2>Sélectionnez une école</h2>
+
+    <nz-list
+      [nzGrid]="{ gutter: 16, column: 3 }"
+      [nzDataSource]="schools"
+      [nzRenderItem]="item"
+      [nzBordered]="false">
+      <ng-template #item let-school>
+        <nz-list-item>
+          <nz-card
+            nzHoverable
+            [nzTitle]="school.name"
+            (click)="selectSchool(school)">
+            <p>📍 {{ school.address }}</p>
+            <p>☎️ {{ school.phoneNumber }}</p>
+          </nz-card>
+        </nz-list-item>
+      </ng-template>
+    </nz-list>
+  </div>
+</nz-spin>

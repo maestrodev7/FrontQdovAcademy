@@ -1,0 +1,34 @@
+
+      .login-form {
+        max-width: 300px;
+      }
+
+      .login-form-margin {
+        margin-bottom: 16px;
+      }
+
+      .login-form-forgot {
+        float: right;
+      }
+
+      .login-form-button {
+        width: 100%;
+      }
+
+.login-container {
+  width: 100vw;             /* prend toute la largeur */
+  height: 100vh;            /* prend toute la hauteur */
+  display: flex;
+  justify-content: center;   /* centre horizontalement */
+  align-items: center;       /* centre verticalement */
+  background: #f0f2f5;      /* fond type Ant Design */
+}
+
+.login-form {
+  width: 350px;             /* largeur du formulaire */
+  padding: 40px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+

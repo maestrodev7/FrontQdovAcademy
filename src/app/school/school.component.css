@@ -1,0 +1,18 @@
+      p {
+        margin: 0;
+      }
+.schools-container {
+  width: 100vw;               /* prend toute la largeur */
+  min-height: 100vh;          /* prend toute la hauteur */
+  display: flex;
+  flex-direction: column;      /* pour empiler le titre et la liste */
+  justify-content: center;     /* centre verticalement */
+  align-items: center;         /* centre horizontalement */
+  background: #f0f2f5;        /* fond type Ant Design */
+  padding: 20px;
+}
+
+.schools-list {
+  width: 100%;
+  max-width: 1000px;          /* limite la largeur de la liste */
+}

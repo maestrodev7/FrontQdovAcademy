@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../../../environment/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ import { Observable, tap } from 'rxjs';
 export class AuthService {
   private TOKEN_KEY = 'auth_token';
   private USER_KEY = 'auth_user';
-  private API_URL = 'http://localhost:8080/api/auth/login';
+  private API_URL = `${environment.baseUrl}/auth/login`;
 
   constructor(
     private http: HttpClient,

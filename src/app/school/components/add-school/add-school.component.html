@@ -1,0 +1,80 @@
+<div class="form-container">
+  <!-- Formulaire école -->
+  <form nz-form [formGroup]="schoolForm" (ngSubmit)="submitSchool()" class="school-form">
+    <nz-form-item>
+      <nz-form-label [nzSpan]="6" nzRequired>Nom de l'école</nz-form-label>
+      <nz-form-control [nzSpan]="14" nzErrorTip="Nom requis">
+        <input nz-input formControlName="name" placeholder="Nom de l'école" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="6" nzRequired>Adresse</nz-form-label>
+      <nz-form-control [nzSpan]="14" nzErrorTip="Adresse requise">
+        <input nz-input formControlName="address" placeholder="Adresse" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="6" nzRequired>Téléphone</nz-form-label>
+      <nz-form-control [nzSpan]="14" nzErrorTip="Téléphone requis">
+        <input nz-input formControlName="phoneNumber" placeholder="+237..." />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="6" nzRequired>Email</nz-form-label>
+      <nz-form-control [nzSpan]="14" nzErrorTip="Email invalide">
+        <input nz-input formControlName="email" placeholder="exemple@email.com" />
+      </nz-form-control>
+    </nz-form-item>
+
+    <nz-form-item>
+      <nz-form-label [nzSpan]="6" nzRequired>Année académique</nz-form-label>
+      <nz-form-control [nzSpan]="14" nzErrorTip="Sélectionnez une année">
+        <nz-select formControlName="academicYearIds" nzPlaceHolder="Sélectionnez une année académique">
+          <nz-option *ngFor="let year of academicYears"
+            [nzValue]="year.id"
+            [nzLabel]="year.startDate + ' - ' + year.endDate">
+          </nz-option>
+        </nz-select>
+      </nz-form-control>
+    </nz-form-item>
+
+    <div class="form-actions">
+      <button nz-button nzType="default" type="button" (click)="openAcademicYearModal()">
+        Ajouter une année académique
+      </button>
+      <button nz-button nzType="primary" type="submit" [nzLoading]="loading">
+        Créer l'école
+      </button>
+    </div>
+  </form>
+<nz-modal
+  [(nzVisible)]="isAcademicYearModalVisible"
+  nzTitle="Nouvelle année académique"
+  (nzOnCancel)="isAcademicYearModalVisible = false"
+  (nzOnOk)="submitAcademicYear()">
+
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="academicYearForm" class="academic-year-form">
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="8" nzRequired>Date début</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+          <input nz-input formControlName="startDate" type="date" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="8" nzRequired>Date fin</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+          <input nz-input formControlName="endDate" type="date" />
+        </nz-form-control>
+      </nz-form-item>
+
+    </form>
+  </ng-container>
+</nz-modal>
+
+</div>

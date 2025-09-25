@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  height: 100vh; /* hauteur full page */
+}
+
+nz-layout {
+  height: 100%;
+  width: 100%;
+}
+
+nz-sider {
+  min-height: 100vh; /* hauteur full */
+}
+nz-layout > nz-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* prend toute la hauteur restante */
+}
+
+nz-content {
+  flex: 1; /* occupe tout l’espace vertical disponible */
+  margin: 16px;
+  background: #fff;
+}
+
+
+
+      .trigger {
+        font-size: 18px;
+        line-height: 64px;
+        padding: 0 24px;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      .trigger:hover {
+        color: #1890ff;
+      }
+
+      .logo {
+        height: 32px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 16px;
+      }
+
+      nz-header {
+        background: #fff;
+        padding: 0;
+      }
+
+      nz-content {
+        margin: 0 16px;
+      }
+
+      nz-breadcrumb {
+        margin: 16px 0;
+      }
+
+      .inner-content {
+        padding: 24px;
+        background: #fff;
+        min-height: 360px;
+      }
+
+      nz-footer {
+        text-align: center;
+      }

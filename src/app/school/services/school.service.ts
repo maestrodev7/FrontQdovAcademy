@@ -15,7 +15,7 @@ export class SchoolService {
 
   // --- Schools ---
   getSchools() {
-    return this.http.get<ApiResponse<School[]>>(`${this.SCHOOL_API}/schools`);
+    return this.http.get<ApiResponse<School[]>>(`${this.SCHOOL_API}`);
   }
 
 

@@ -7,6 +7,8 @@ import { NzCardModule } from 'ng-zorro-antd/card';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { CommonModule } from '@angular/common';
 import { NzGridModule } from 'ng-zorro-antd/grid';
+import { Router } from '@angular/router';
+
 import { SchoolService } from './services/school.service';
 import { ApiResponse } from '../shared/interfaces/api-response';
 import { School } from './interfaces/school';
@@ -32,7 +34,8 @@ export class SchoolComponent implements OnInit {
 
   constructor(
     private schoolService: SchoolService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -41,20 +44,22 @@ export class SchoolComponent implements OnInit {
 
   loadSchools() {
     this.schoolService.getSchools().subscribe({
-  next: (res: ApiResponse<School[]>) => {
-    this.schools = res.data;
-    this.loading = false;
-  },
-  error: () => {
-    this.message.error("Impossible de charger les écoles");
-    this.loading = false;
-  }
-});
-
+      next: (res: ApiResponse<School[]>) => {
+        this.schools = res.data;
+        this.loading = false;
+      },
+      error: () => {
+        this.message.error("Impossible de charger les écoles");
+        this.loading = false;
+      }
+    });
   }
 
   selectSchool(school: School) {
     localStorage.setItem("schoolId", school.id);
     this.message.success(`École sélectionnée : ${school.name}`);
+    setTimeout(() => {
+      this.router.navigate(['/dashboard']);
+    }, 500);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { SchoolService } from '../../services/school.service';
@@ -12,6 +12,7 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-add-school',
@@ -36,6 +37,7 @@ export class AddSchoolComponent implements OnInit {
   academicYears: any[] = [];
   isAcademicYearModalVisible = false;
   loading = false;
+  private router = inject(Router);
 
   schoolForm!: FormGroup;
   academicYearForm!: FormGroup;
@@ -98,6 +100,7 @@ export class AddSchoolComponent implements OnInit {
         this.schoolForm.patchValue({ academicYearIds: [year.id] });
         this.isAcademicYearModalVisible = false;
         this.message.success('Année académique créée avec succès');
+        this.router.navigate(['/school/list']);
       },
       error: () => this.message.error("Erreur lors de la création de l'année académique")
     });

@@ -4,8 +4,7 @@
 }
 
 nz-layout {
-  height: 100%;
-  width: 100%;
+
 }
 
 nz-sider {
@@ -13,55 +12,51 @@ nz-sider {
 }
 nz-layout > nz-layout {
   display: flex;
-  flex-direction: column;
-  flex: 1; /* prend toute la hauteur restante */
+  flex-wrap: wrap;
+  min-width: 100%;
+  flex: 1;
 }
 
 nz-content {
   flex: 1; /* occupe tout l’espace vertical disponible */
   margin: 16px;
-  background: #fff;
+  flex-wrap: wrap;
+  min-width: 100%;
 }
 
+.trigger {
+font-size: 18px;
+line-height: 64px;
+padding: 0 24px;
+cursor: pointer;
+transition: color 0.3s;
+}
 
+.trigger:hover {
+color: #1890ff;
+}
 
-      .trigger {
-        font-size: 18px;
-        line-height: 64px;
-        padding: 0 24px;
-        cursor: pointer;
-        transition: color 0.3s;
-      }
+.logo {
+height: 32px;
+background: rgba(255, 255, 255, 0.2);
+margin: 16px;
+}
 
-      .trigger:hover {
-        color: #1890ff;
-      }
+nz-header {
+background: #fff;
+padding: 0;
+}
 
-      .logo {
-        height: 32px;
-        background: rgba(255, 255, 255, 0.2);
-        margin: 16px;
-      }
+nz-breadcrumb {
+margin: 16px 0;
+}
 
-      nz-header {
-        background: #fff;
-        padding: 0;
-      }
+.inner-content {
+padding: 24px;
+background: #fff;
+min-height: 360px;
+}
 
-      nz-content {
-        margin: 0 16px;
-      }
-
-      nz-breadcrumb {
-        margin: 16px 0;
-      }
-
-      .inner-content {
-        padding: 24px;
-        background: #fff;
-        min-height: 360px;
-      }
-
-      nz-footer {
-        text-align: center;
-      }
+nz-footer {
+text-align: center;
+}

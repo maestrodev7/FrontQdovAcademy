@@ -1,0 +1,5 @@
+.header-actions {
+  display: flex;
+  justify-content: flex-end; /* Aligne à droite */
+  margin-bottom: 16px; /* Espace avant le tableau */
+}

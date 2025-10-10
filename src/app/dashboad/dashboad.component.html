@@ -1,42 +1,56 @@
+<nz-layout>
+  <nz-sider nzCollapsible [(nzCollapsed)]="isCollapsed" [nzTrigger]="null">
+    <div class="logo"></div>
+    <ul nz-menu nzTheme="dark" nzMode="inline">
 
-    <nz-layout>
-      <nz-sider nzCollapsible [(nzCollapsed)]="isCollapsed" [nzTrigger]="null">
-        <div class="logo"></div>
-        <ul nz-menu nzTheme="dark" nzMode="inline">
-          <li nz-submenu nzTitle="User" nzIcon="user">
-            <ul>
-              <li nz-menu-item>Tom</li>
-              <li nz-menu-item>Bill</li>
-              <li nz-menu-item>Alex</li>
-            </ul>
-          </li>
-          <li nz-submenu nzTitle="Team" nzIcon="team">
-            <ul>
-              <li nz-menu-item>Team 1</li>
-              <li nz-menu-item>Team 2</li>
-            </ul>
-          </li>
-          <li nz-menu-item>
-            <span nz-icon nzType="file"></span>
-            <span>Inscription</span>
-          </li>
-        </ul>
-      </nz-sider>
-      <nz-layout>
-        <nz-header>
-          <span
-            class="trigger"
-            nz-icon
-            [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"
-            (click)="isCollapsed = !isCollapsed"
-          ></span>
-        </nz-header>
-        <nz-content>
-          <nz-breadcrumb>
+      <ng-container *ngIf="isSuperAdmin()">
+        <li nz-submenu nzTitle="Utilisateurs" nzIcon="user">
+          <ul>
+            <li nz-menu-item routerLink="/dashboard/admins">Admins</li>
+            <li nz-menu-item routerLink="/users/promoteurs">Promoteurs</li>
+          </ul>
+        </li>
 
-            <app-table></app-table>
-          </nz-breadcrumb>
-        </nz-content>
-        <nz-footer>Ant Design ©2020 Implement By Angular</nz-footer>
-      </nz-layout>
-    </nz-layout>
+        <li nz-submenu nzTitle="Paramètres" nzIcon="setting">
+          <ul>
+            <li nz-menu-item routerLink="/parametres/systeme">Système</li>
+            <li nz-menu-item routerLink="/parametres/roles">Rôles</li>
+          </ul>
+        </li>
+      </ng-container>
+
+      <ng-container *ngIf="isAdminOrPromoteur()">
+        <li nz-submenu nzTitle="Gestion des personnes" nzIcon="team">
+          <ul>
+            <li nz-menu-item routerLink="/users/enseignants">Enseignants</li>
+            <li nz-menu-item routerLink="/users/eleves">Élèves</li>
+            <li nz-menu-item routerLink="/users/parents">Parents</li>
+          </ul>
+        </li>
+
+        <li nz-menu-item routerLink="/inscriptions">
+          <span nz-icon nzType="file"></span>
+          <span>Inscriptions</span>
+        </li>
+      </ng-container>
+
+    </ul>
+  </nz-sider>
+<router-outlet></router-outlet>
+  <!-- <nz-layout>
+    <nz-header>
+      <span
+        class="trigger"
+        nz-icon
+        [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"
+        (click)="isCollapsed = !isCollapsed"
+      ></span>
+    </nz-header>
+
+    <nz-content >
+      Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quae officia quaerat reprehenderit explicabo, alias, dolorem praesentium pariatur facilis, reiciendis ipsum beatae laboriosam vitae consectetur. Omnis distinctio magnam voluptatem autem porro.
+    </nz-content>
+
+    <nz-footer>QDOV ©2025 — School Management Dashboard</nz-footer>
+  </nz-layout> -->
+</nz-layout>

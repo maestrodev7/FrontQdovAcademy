@@ -1,5 +1,20 @@
 <div class="header-actions">
-  <button nz-button nzType="primary">Primary Button</button>
+  <button nz-button nzType="primary" (click)="openModal()">Créer un admin</button>
 </div>
 
 <app-table></app-table>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un administrateur"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+<ng-container *nzModalContent>
+  <app-add-admin
+    [form]="adminForm"
+    (formChange)="onFormChange($event)"
+  ></app-add-admin>
+</ng-container>
+</nz-modal>

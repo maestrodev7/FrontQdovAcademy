@@ -13,7 +13,6 @@ export class SchoolService {
 
   constructor(private http: HttpClient) {}
 
-  // --- Schools ---
   getSchools() {
     return this.http.get<ApiResponse<School[]>>(`${this.SCHOOL_API}`);
   }
@@ -23,7 +22,6 @@ export class SchoolService {
     return this.http.post<any>(this.SCHOOL_API, payload);
   }
 
-  // --- Academic Years ---
   getAcademicYears(): Observable<any[]> {
     return this.http.get<any[]>(this.ACADEMIC_YEAR_API);
   }

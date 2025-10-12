@@ -122,6 +122,7 @@ submitSchool() {
       this.message.success("École créée avec succès");
       this.schoolForm.reset();
       this.loading = false;
+      this.router.navigate(['/school/list']);
     },
     error: () => {
       this.message.error("Erreur lors de la création de l'école");

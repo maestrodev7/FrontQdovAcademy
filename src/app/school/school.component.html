@@ -2,6 +2,15 @@
   <div class="schools-container">
     <h2>Sélectionnez une école</h2>
 
+    <button
+      nz-button
+      nzType="primary"
+      style="position: absolute; top: 0; right: 0;"
+      (click)="goToAddSchool()"
+    >
+      Ajouter une école
+    </button>
+
     <nz-list
       [nzGrid]="{ gutter: 16, column: 3 }"
       [nzDataSource]="schools"

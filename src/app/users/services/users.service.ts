@@ -21,6 +21,10 @@ export class UsersService {
     return this.http.post<any>(this.USER_SCHOOL_API, payload);
   }
 
+  getSchoolsWithAdmins(): Observable<any> {
+    return this.http.get<any>(`${this.USER_SCHOOL_API}/schools-with-admins`);
+  }
+
   createAdminForSchool(payload: any): Observable<any> {
     const userPayload = { ...payload, roles: ['ADMIN'] };
 

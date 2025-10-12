@@ -26,6 +26,11 @@ export class SchoolService {
     return this.http.get<any[]>(this.ACADEMIC_YEAR_API);
   }
 
+  getSchoolsByUserId(userId: string): Observable<ApiResponse<any>> {
+  return this.http.get<ApiResponse<any>>(`${environment.baseUrl}/user-schools/user/${userId}/schools`);
+}
+
+
   createAcademicYear(payload: any): Observable<any> {
     return this.http.post<any>(this.ACADEMIC_YEAR_API, payload);
   }

@@ -12,6 +12,9 @@ import { Router } from '@angular/router';
 import { SchoolService } from './services/school.service';
 import { ApiResponse } from '../shared/interfaces/api-response';
 import { School } from './interfaces/school';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import {  NzFlexModule } from 'ng-zorro-antd/flex';
+import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 
 @Component({
   selector: 'app-school',
@@ -25,7 +28,10 @@ import { School } from './interfaces/school';
     NzListModule,
     NzIconModule,
     CommonModule,
-    NzGridModule
+    NzGridModule,
+    NzButtonModule,
+    NzFlexModule,
+    NzSegmentedModule,
   ],
 })
 export class SchoolComponent implements OnInit {
@@ -38,9 +44,27 @@ export class SchoolComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
+ngOnInit(): void {
+  console.log('SchoolComponent initialized');
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
+  console.log(role);
+
+  if (role === 'SUPER_ADMIN') {
     this.loadSchools();
+  } else {
+    const schools = JSON.parse(localStorage.getItem('userSchools') || '[]');
+    if (schools.length > 0) {
+      this.schools = schools;
+      this.loading = false;
+    } else {
+      this.message.info("Aucune école associée à cet utilisateur");
+      this.loading = false;
+    }
   }
+}
+
 
   loadSchools() {
     this.schoolService.getSchools().subscribe({
@@ -53,6 +77,11 @@ export class SchoolComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+
+  goToAddSchool() {
+    this.router.navigate(['/school/add']);
   }
 
   selectSchool(school: School) {

@@ -49,7 +49,6 @@ ngOnInit(): void {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
-  console.log(role);
 
   if (role === 'SUPER_ADMIN') {
     this.loadSchools();

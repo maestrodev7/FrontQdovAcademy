@@ -61,7 +61,9 @@ submitForm(): void {
       const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
 
       if (role === 'SUPER_ADMIN') {
+        localStorage.setItem('user', JSON.stringify(user));
         this.router.navigate(['/school/list']);
+
       } else if (role === 'ADMIN' || role === 'PROMOTEUR') {
         this.schoolService.getSchoolsByUserId(user.id).subscribe({
           next: (res: any) => {

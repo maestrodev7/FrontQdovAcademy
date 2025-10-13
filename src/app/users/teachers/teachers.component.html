@@ -1,0 +1,18 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">Créer un enseignant</button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un Enseignant"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+<ng-container *nzModalContent>
+  <app-add-teacher
+    [form]="adminForm"
+    (formChange)="onFormChange($event)"
+  ></app-add-teacher>
+</ng-container>
+</nz-modal>

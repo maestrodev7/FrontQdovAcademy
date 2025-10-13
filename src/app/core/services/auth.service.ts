@@ -19,10 +19,11 @@ export class AuthService {
 
   login(username: string, password: string): Observable<any> {
     const payload = { username, password };
-
     return this.http.post<any>(this.API_URL, payload).pipe(
       tap((response) => {
         if (response?.data?.token) {
+          localStorage.clear();
+          sessionStorage.clear();
           localStorage.setItem(this.TOKEN_KEY, response.data.token);
 
           if (response.data.user) {

@@ -36,4 +36,16 @@ export class UsersService {
       })
     );
   }
+
+    createTeacherForSchool(payload: any): Observable<any> {
+    const userPayload = { ...payload, roles: ['ENSEIGNANT'] };
+
+    return this.createUser(userPayload).pipe(
+      switchMap((res: any) => {
+        const userId = res.data?.id || res.id;
+        const schoolId = payload.schoolId;
+        return this.assignUserToSchool(userId, schoolId, 'ENSEIGNANT');
+      })
+    );
+  }
 }

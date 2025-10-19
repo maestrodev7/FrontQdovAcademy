@@ -1,3 +1,27 @@
-<p>
-  class-level works!
-</p>
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">Créer un Niveau</button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un Niveau de Classe"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <app-add-class-level
+      [form]="classLevelForm"
+      (formChange)="onFormChange($event)"
+    ></app-add-class-level>
+  </ng-container>
+</nz-modal>
+
+<div class="p-6">
+  <app-dynamic-table
+    [title]="'Liste des niveaux de classe'"
+    [columns]="columns"
+    [data]="classLevels"
+    [selectable]="true"
+  ></app-dynamic-table>
+</div>

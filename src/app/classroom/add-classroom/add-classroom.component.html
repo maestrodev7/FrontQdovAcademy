@@ -1,3 +1,29 @@
-<p>
-  add-classroom works!
-</p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="24">
+      <label>Nom de la classe</label>
+      <input nz-input formControlName="label" placeholder="Ex: 3e A" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Niveau</label>
+      <nz-select formControlName="classLevelId" nzPlaceHolder="Sélectionner un niveau">
+        <nz-option *ngFor="let level of levels" [nzValue]="level.id" [nzLabel]="level.name"></nz-option>
+      </nz-select>
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Série</label>
+      <nz-select formControlName="seriesId" nzPlaceHolder="Sélectionner une série">
+        <nz-option *ngFor="let serie of series" [nzValue]="serie.id" [nzLabel]="serie.name"></nz-option>
+      </nz-select>
+    </div>
+
+    <div nz-col nzSpan="24">
+      <label>École</label>
+      <nz-select formControlName="schoolId" nzPlaceHolder="Sélectionner une école">
+        <nz-option *ngFor="let school of schools" [nzValue]="school.id" [nzLabel]="school.name"></nz-option>
+      </nz-select>
+    </div>
+  </div>
+</form>

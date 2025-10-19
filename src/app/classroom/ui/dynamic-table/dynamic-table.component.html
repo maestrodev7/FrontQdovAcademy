@@ -1,0 +1,34 @@
+<div class="p-4 bg-white rounded-lg shadow">
+  <h3 *ngIf="title" class="text-lg font-semibold mb-4">{{ title }}</h3>
+
+  <nz-table
+    #dynamicTable
+    nzShowSizeChanger
+    [nzData]="data"
+    (nzCurrentPageDataChange)="onCurrentPageDataChange($event)"
+  >
+    <thead>
+      <tr>
+        <th *ngIf="selectable"
+            [(nzChecked)]="checked"
+            [nzIndeterminate]="indeterminate"
+            (nzCheckedChange)="onAllChecked($event)">
+        </th>
+        <th *ngFor="let col of columns">{{ col.label }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let row of dynamicTable.data">
+        <td *ngIf="selectable"
+            [nzChecked]="setOfCheckedId.has(row.id)"
+            (nzCheckedChange)="onItemChecked(row.id, $event)">
+        </td>
+
+        <td *ngFor="let col of columns">
+          {{ row[col.key] }}
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</div>

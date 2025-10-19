@@ -1,3 +1,27 @@
-<p>
-  series works!
-</p>
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">Créer une Série</button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer une Série"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <app-add-serie
+      [form]="serieForm"
+      (formChange)="onFormChange($event)"
+    ></app-add-serie>
+  </ng-container>
+</nz-modal>
+
+<div class="p-6">
+  <app-dynamic-table
+    [title]="'Liste des séries'"
+    [columns]="columns"
+    [data]="seriesList"
+    [selectable]="true">
+  </app-dynamic-table>
+</div>

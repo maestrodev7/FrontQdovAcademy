@@ -20,11 +20,17 @@
       </ng-container>
 
       <ng-container *ngIf="isAdminOrPromoteur()">
-        <li nz-submenu nzTitle="Gestion des personnes" nzIcon="team">
+        <li nz-submenu nzTitle="Utilisateurs" nzIcon="team">
           <ul>
             <li nz-menu-item routerLink="/dashboard/teachers">Enseignants</li>
-            <li nz-menu-item routerLink="/users/eleves">Élèves</li>
-            <li nz-menu-item routerLink="/users/parents">Parents</li>
+          </ul>
+        </li>
+
+        <li nz-submenu nzTitle="Classes" nzIcon="read">
+          <ul>
+            <li nz-menu-item routerLink="/dashboard/series">Series</li>
+            <li nz-menu-item routerLink="/dashboard/class-levels">Niveau</li>
+            <li nz-menu-item routerLink="/dashboard/classrooms">Classes</li>
           </ul>
         </li>
 
@@ -37,20 +43,4 @@
     </ul>
   </nz-sider>
 <router-outlet></router-outlet>
-  <!-- <nz-layout>
-    <nz-header>
-      <span
-        class="trigger"
-        nz-icon
-        [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"
-        (click)="isCollapsed = !isCollapsed"
-      ></span>
-    </nz-header>
-
-    <nz-content >
-      Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quae officia quaerat reprehenderit explicabo, alias, dolorem praesentium pariatur facilis, reiciendis ipsum beatae laboriosam vitae consectetur. Omnis distinctio magnam voluptatem autem porro.
-    </nz-content>
-
-    <nz-footer>QDOV ©2025 — School Management Dashboard</nz-footer>
-  </nz-layout> -->
 </nz-layout>

@@ -1,3 +1,8 @@
-<p>
-  add-class-level works!
-</p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="24">
+      <label>Nom du niveau</label>
+      <input nz-input formControlName="name" placeholder="Ex: Terminale, Première, 6e..." />
+    </div>
+  </div>
+</form>

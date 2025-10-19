@@ -1,9 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { TableComponent } from '../../dashboad/ui/table/table.component';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AddAdminComponent } from '../add-admin/add-admin.component';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { CommonModule } from '@angular/common';

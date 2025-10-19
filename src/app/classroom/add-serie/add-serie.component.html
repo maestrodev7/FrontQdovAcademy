@@ -1,3 +1,13 @@
-<p>
-  add-serie works!
-</p>
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="12">
+      <label>Code de la série</label>
+      <input nz-input formControlName="code" placeholder="Ex: S001" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom de la série</label>
+      <input nz-input formControlName="name" placeholder="Ex: Scientifique" />
+    </div>
+  </div>
+</form>

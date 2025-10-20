@@ -1,8 +1,10 @@
-<div class="p-4 bg-white rounded-lg shadow">
+<div class="">
   <h3 *ngIf="title" class="text-lg font-semibold mb-4">{{ title }}</h3>
 
   <nz-table
     #dynamicTable
+    [nzScroll]="{ x: '100%' }"
+    class="full-width"
     nzShowSizeChanger
     [nzData]="data"
     (nzCurrentPageDataChange)="onCurrentPageDataChange($event)"

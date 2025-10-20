@@ -1,0 +1,9 @@
+.full-width {
+  width: 100% !important;
+}
+
+.full-width th,
+.full-width td {
+  text-align: left; /* garde le texte au début */
+  padding: 8px 12px; /* facultatif, un peu d’espace */
+}

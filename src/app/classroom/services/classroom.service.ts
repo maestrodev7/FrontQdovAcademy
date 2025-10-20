@@ -12,9 +12,10 @@ export class ClassroomService {
 
   constructor(private http: HttpClient) {}
 
-  getClassrooms(): Observable<ApiResponse<any[]>> {
-    return this.http.get<ApiResponse<any[]>>(this.CLASSROOM_API);
+  getClassroomsBySchool(schoolId: string) {
+    return this.http.get<ApiResponse<any[]>>(`${this.CLASSROOM_API}/school/${schoolId}`);
   }
+
 
   createClassroom(payload: any): Observable<ApiResponse<any>> {
     return this.http.post<ApiResponse<any>>(this.CLASSROOM_API, payload);

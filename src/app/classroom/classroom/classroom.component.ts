@@ -56,14 +56,17 @@ export class ClassroomComponent implements OnInit {
     this.loadReferenceData();
   }
 
-  private initForm(): void {
-    this.classroomForm = this.fb.group({
-      label: ['', Validators.required],
-      classLevelId: ['', Validators.required],
-      seriesId: ['', Validators.required],
-      schoolId: ['', Validators.required],
-    });
-  }
+private initForm(): void {
+  const schoolId = localStorage.getItem('schoolId') || '';
+
+  this.classroomForm = this.fb.group({
+    label: ['', Validators.required],
+    classLevelId: ['', Validators.required],
+    seriesId: ['', Validators.required],
+    schoolId: [schoolId, Validators.required],
+  });
+}
+
 
   openModal(): void {
     this.isModalVisible = true;
@@ -114,7 +117,10 @@ export class ClassroomComponent implements OnInit {
   }
 
   private loadClassrooms(): void {
-    this.classroomService.getClassrooms().subscribe({
+    const schoolId = localStorage.getItem('schoolId');
+    if (!schoolId) return;
+
+    this.classroomService.getClassroomsBySchool(schoolId).subscribe({
       next: (res) => {
         this.classrooms = (res.data ?? []).map((cls: any) => ({
           ...cls,
@@ -128,4 +134,5 @@ export class ClassroomComponent implements OnInit {
       }
     });
   }
+
 }

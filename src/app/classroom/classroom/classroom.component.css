@@ -1,0 +1,16 @@
+.header-actions {
+  display: flex;
+  justify-content: flex-end; /* pousse le bouton à droite */
+  padding: 1rem;             /* même padding que ton container principal */
+  background-color: white;    /* même couleur que le container */
+  border-radius: 0.5rem;      /* arrondis identiques */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* même shadow */
+  margin-bottom: 1rem;        /* espace avant le tableau */
+}
+
+.content-container {
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}

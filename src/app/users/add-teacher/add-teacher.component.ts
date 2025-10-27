@@ -13,33 +13,39 @@ import { SchoolService } from '../../school/services/school.service';
   selector: 'app-add-teacher',
   templateUrl: './add-teacher.component.html',
   styleUrls: ['./add-teacher.component.css'],
-    standalone: true,
-    imports: [
-      CommonModule,
-      ReactiveFormsModule,
-      NzGridModule,
-      NzFormModule,
-      NzInputModule,
-      NzSelectModule,
-      NzDividerModule,
-      NzButtonModule,
-    ],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    NzGridModule,
+    NzFormModule,
+    NzInputModule,
+    NzSelectModule,
+    NzDividerModule,
+    NzButtonModule,
+  ],
 })
 export class AddTeacherComponent implements OnInit {
-
   @Input() form!: FormGroup;
   @Output() formChange = new EventEmitter<any>();
 
-  schools: any[] = [];
+  schoolName: string | null = null;
   isLoading = false;
 
   constructor(private schoolService: SchoolService) {}
 
   ngOnInit(): void {
+    const schoolId = localStorage.getItem('schoolId');
+    if (!schoolId) return;
+
     this.isLoading = true;
     this.schoolService.getSchools().subscribe({
       next: (res) => {
-        this.schools = res.data || [];
+        const school = (res.data || []).find((s: any) => s.id === schoolId);
+        if (school) {
+          this.schoolName = school.name;
+          this.form.patchValue({ schoolId: school.id });
+        }
         this.isLoading = false;
       },
       error: () => (this.isLoading = false),
@@ -49,5 +55,4 @@ export class AddTeacherComponent implements OnInit {
   onSubmit() {
     this.formChange.emit(this.form.value);
   }
-
 }

@@ -7,6 +7,7 @@ import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { CommonModule } from '@angular/common';
 import { UsersService } from '../services/users.service';
 import { AddTeacherComponent } from '../add-teacher/add-teacher.component';
+import { DynamicTableComponent } from '../../classroom/ui/dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-teachers',
@@ -21,16 +22,26 @@ import { AddTeacherComponent } from '../add-teacher/add-teacher.component';
       NzDividerModule,
       ReactiveFormsModule,
       CommonModule,
+      DynamicTableComponent,
     ],
 })
 export class TeachersComponent implements OnInit {
   isModalVisible = false;
   isSubmitting = false;
   adminForm!: FormGroup;
+    teachers: any[] = [];
+
+  columns = [
+    { key: 'fullName', label: 'Nom complet' },
+    { key: 'email', label: 'Email' },
+    { key: 'phoneNumber', label: 'Téléphone' },
+    { key: 'role', label: 'Rôle' }
+  ];
 
   constructor(private fb: FormBuilder, private userService: UsersService) {}
 
   ngOnInit(): void {
+    this.loadTeachers();
     this.adminForm = this.fb.group({
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
@@ -46,6 +57,27 @@ export class TeachersComponent implements OnInit {
     this.isModalVisible = true;
   }
 
+    private loadTeachers(): void {
+    const schoolId = localStorage.getItem('schoolId');
+    console.log(schoolId);
+
+    if (!schoolId) return;
+
+    this.userService.getTeachersBySchool(schoolId).subscribe({
+      next: (res) => {
+        this.teachers = (res.data ?? []).map((teacher: any) => ({
+          id: teacher.userId,
+          fullName: `${teacher.user.firstName} ${teacher.user.lastName}`,
+          email: teacher.user.email,
+          phoneNumber: teacher.user.phoneNumber,
+          role: teacher.role
+        }));
+      },
+      error: (err) => {
+      }
+    });
+  }
+
   handleCancel(): void {
     this.isModalVisible = false;
   }
@@ -58,18 +90,30 @@ export class TeachersComponent implements OnInit {
     if (this.adminForm.invalid) return;
 
     this.isSubmitting = true;
-
     const payload = this.adminForm.value;
 
     this.userService.createTeacherForSchool(payload).subscribe({
       next: (res) => {
         this.isSubmitting = false;
         this.isModalVisible = false;
-        this.adminForm.reset();
+
+        const newTeacher = {
+          id: res.data?.userId || payload.username,
+          fullName: `${payload.firstName} ${payload.lastName}`,
+          email: payload.email,
+          phoneNumber: payload.phoneNumber,
+          role: 'ENSEIGNANT'
+        };
+
+        this.teachers = [newTeacher, ...this.teachers];
+
+        this.adminForm.reset
       },
       error: (err) => {
         this.isSubmitting = false;
       },
     });
   }
+
+
 }

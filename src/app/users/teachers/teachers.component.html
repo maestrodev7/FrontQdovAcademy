@@ -16,3 +16,12 @@
   ></app-add-teacher>
 </ng-container>
 </nz-modal>
+
+<div class="content-container">
+  <app-dynamic-table
+    [title]="'Enseignants de l’école'"
+    [columns]="columns"
+    [data]="teachers"
+    [selectable]="false"
+  ></app-dynamic-table>
+</div>

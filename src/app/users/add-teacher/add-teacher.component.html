@@ -32,17 +32,11 @@
 
     <div nz-col nzSpan="24">
       <label>École</label>
-      <nz-select
-        formControlName="schoolId"
-        nzPlaceHolder="Sélectionner une école"
-        [nzLoading]="isLoading"
-      >
-        <nz-option
-          *ngFor="let school of schools"
-          [nzValue]="school.id"
-          [nzLabel]="school.name"
-        ></nz-option>
-      </nz-select>
+      <input
+        nz-input
+        [value]="schoolName || '—'"
+        disabled
+      />
     </div>
   </div>
 </form>

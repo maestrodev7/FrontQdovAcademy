@@ -16,6 +16,10 @@ export class UsersService {
     return this.http.post<any>(this.USER_API, payload);
   }
 
+    getTeachersBySchool(schoolId: string): Observable<any> {
+    return this.http.get(`${this.USER_SCHOOL_API}/school/${schoolId}/teachers`);
+  }
+
   assignUserToSchool(userId: string, schoolId: string, role: string = 'ADMIN'): Observable<any> {
     const payload = { userId, schoolId, role };
     return this.http.post<any>(this.USER_SCHOOL_API, payload);
@@ -39,6 +43,7 @@ export class UsersService {
 
     createTeacherForSchool(payload: any): Observable<any> {
     const userPayload = { ...payload, roles: ['ENSEIGNANT'] };
+    console.log(userPayload);
 
     return this.createUser(userPayload).pipe(
       switchMap((res: any) => {

@@ -1,27 +1,27 @@
 <div class="header-actions">
-  <button nz-button nzType="primary" (click)="openModal()">Créer un enseignant</button>
+  <button nz-button nzType="primary" (click)="openModal()">Créer un parent</button>
 </div>
 
 <nz-modal
   [(nzVisible)]="isModalVisible"
-  nzTitle="Créer un Enseignant"
+  nzTitle="Créer un Parent"
   (nzOnCancel)="handleCancel()"
   (nzOnOk)="submitForm()"
   [nzOkLoading]="isSubmitting"
 >
 <ng-container *nzModalContent>
-  <app-add-teacher
-    [form]="adminForm"
+  <app-add-parent
+    [form]="parentForm"
     (formChange)="onFormChange($event)"
-  ></app-add-teacher>
+  ></app-add-parent>
 </ng-container>
 </nz-modal>
 
 <div class="content-container">
   <app-dynamic-table
-    [title]="'Enseignants de l’école'"
+    [title]="'Parents d\'eleves'"
     [columns]="columns"
-    [data]="teachers"
+    [data]="parents"
     [selectable]="true"
   ></app-dynamic-table>
 </div>

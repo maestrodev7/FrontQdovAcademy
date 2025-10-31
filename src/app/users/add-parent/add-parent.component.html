@@ -1,0 +1,46 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="12">
+      <label>Prénom</label>
+      <input nz-input formControlName="firstName" />
+      <div class="error" *ngIf="form.get('firstName')?.hasError('apiError')">
+        {{ form.get('firstName')?.errors?.['apiError'] }}
+      </div>
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom</label>
+      <input nz-input formControlName="lastName" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom d'utilisateur</label>
+      <input nz-input formControlName="username" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Email</label>
+      <input nz-input formControlName="email" />
+      <div class="error" *ngIf="form.get('email')?.hasError('apiError')">
+        {{ form.get('email')?.errors?.['apiError'] }}
+      </div>
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Téléphone</label>
+      <input nz-input formControlName="phoneNumber" />
+      <div class="error" *ngIf="form.get('phoneNumber')?.hasError('apiError')">
+        {{ form.get('phoneNumber')?.errors?.['apiError'] }}
+      </div>
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Mot de passe</label>
+      <input nz-input type="password" formControlName="password" />
+    </div>
+  </div>
+
+  <div class="error" *ngIf="form.errors?.['apiError']">
+    {{ form.errors?.['apiError'] }}
+  </div>
+</form>

@@ -16,7 +16,11 @@ export class UsersService {
     return this.http.post<any>(this.USER_API, payload);
   }
 
-    getTeachersBySchool(schoolId: string): Observable<any> {
+getParents(): Observable<any> {
+  return this.http.get<any>(`${this.USER_API}?role=PARENT`);
+}
+
+  getTeachersBySchool(schoolId: string): Observable<any> {
     return this.http.get(`${this.USER_SCHOOL_API}/school/${schoolId}/teachers`);
   }
 

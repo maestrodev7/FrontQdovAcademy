@@ -9,6 +9,7 @@ import { SeriesComponent } from '../classroom/series/series.component';
 import { ClassroomComponent } from '../classroom/classroom/classroom.component';
 import { ClassLevelComponent } from '../classroom/class-level/class-level.component';
 import { ParentsComponent } from '../users/parents/parents.component';
+import { StudentsComponent } from '../users/students/students.component';
 
 
 const routes: Routes = [
@@ -20,6 +21,7 @@ const routes: Routes = [
       { path: 'admins', component: AdminsComponent },
       { path: 'teachers', component: TeachersComponent},
       { path: 'parents', component: ParentsComponent },
+      { path: 'students', component: StudentsComponent},
       { path: 'series', component: SeriesComponent },
       { path: 'classrooms', component: ClassroomComponent },
       { path: 'class-levels', component: ClassLevelComponent },

@@ -1,0 +1,57 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="12">
+      <label>Prénom</label>
+      <input nz-input formControlName="firstName" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom</label>
+      <input nz-input formControlName="lastName" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom d'utilisateur</label>
+      <input nz-input formControlName="username" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Email</label>
+      <input nz-input formControlName="email" />
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Téléphone</label>
+      <input nz-input formControlName="phoneNumber" />
+    </div>
+        <div nz-col nzSpan="12">
+      <label>Mot de passe</label>
+      <input nz-input type="password" formControlName="password" />
+    </div>
+
+    <div nz-col nzSpan="24">
+      <label>École</label>
+      <input
+        nz-input
+        [value]="schoolName || '—'"
+        disabled
+      />
+    </div>
+<div nz-col nzSpan="24">
+  <label>Parents</label>
+  <nz-select
+    formControlName="parentId"
+    nzPlaceHolder="Sélectionner un parent"
+    [nzLoading]="isLoading"
+    nzShowSearch
+    [nzFilterOption]="filterParentOption"
+  >
+    <nz-option
+      *ngFor="let parent of parents"
+      [nzValue]="parent.id"
+      [nzLabel]="parent.fullName"
+    ></nz-option>
+  </nz-select>
+</div>
+  </div>
+</form>

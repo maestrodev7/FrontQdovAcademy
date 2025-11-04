@@ -1,0 +1,27 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">Créer un eleve</button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un Élève"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+<ng-container *nzModalContent>
+  <app-add-student
+    [form]="studentForm"
+    (formChange)="onFormChange($event)"
+  ></app-add-student>
+</ng-container>
+</nz-modal>
+
+<div class="content-container">
+  <app-dynamic-table
+    [title]="'Élèves'"
+    [columns]="columns"
+    [data]="students"
+    [selectable]="true"
+  ></app-dynamic-table>
+</div>

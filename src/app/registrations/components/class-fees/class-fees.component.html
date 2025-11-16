@@ -3,6 +3,17 @@
     <span nz-icon nzType="plus"></span>
     Créer un frais de classe
   </button>
+  <div style="margin-top: 16px;">
+    <nz-select
+      [(ngModel)]="selectedClassroom"
+      nzPlaceHolder="Filtrer par classe"
+      nzAllowClear
+      (ngModelChange)="onClassroomChange()"
+      style="width: 300px;"
+    >
+      <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+    </nz-select>
+  </div>
 </div>
 
 <nz-modal
@@ -60,7 +71,7 @@
 </nz-modal>
 
 <div class="content-container">
-  <nz-table [nzData]="classFees" [nzShowPagination]="false">
+  <nz-table [nzData]="filteredClassFees" [nzShowPagination]="false">
     <thead>
       <tr>
         <th>Classe</th>

@@ -114,7 +114,14 @@ export class RegisterStudentComponent implements OnInit {
       }));
 
       this.classrooms = classroomsRes.data || [];
-      this.academicYears = yearsRes || [];
+      this.academicYears = (yearsRes.data || []).map((year: any) => ({
+        id: year.id,
+        label: `${year.startDate} - ${year.endDate}`,
+        startDate: year.startDate,
+        endDate: year.endDate,
+        active: year.active
+      }));
+
     } catch (error) {
       console.error('Erreur lors du chargement des données', error);
     }

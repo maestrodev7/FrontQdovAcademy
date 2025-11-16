@@ -11,10 +11,12 @@ import { ClassFee, CreateClassFeeRequest } from '../interfaces/class-fee.interfa
 export class ClassFeeService {
   constructor(private http: HttpClient) {}
 
-  getClassFeesBySchool(schoolId: string): Observable<ApiResponse<ClassFee[]>> {
-    return this.http.get<ApiResponse<ClassFee[]>>(
-      `${environment.baseUrl}/schools/${schoolId}/class-fees`
-    );
+  getClassFeesBySchool(schoolId: string, classRoomId?: string): Observable<ApiResponse<ClassFee[]>> {
+    let url = `${environment.baseUrl}/schools/${schoolId}/class-fees`;
+    if (classRoomId) {
+      url += `?classRoomId=${classRoomId}`;
+    }
+    return this.http.get<ApiResponse<ClassFee[]>>(url);
   }
 
   createClassFee(schoolId: string, payload: CreateClassFeeRequest): Observable<ApiResponse<ClassFee>> {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -26,6 +27,7 @@ import { firstValueFrom } from 'rxjs';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     NzButtonModule,
     NzModalModule,
     NzFormModule,
@@ -44,10 +46,12 @@ export class ClassFeesComponent implements OnInit {
   isSubmitting = false;
   classFeeForm!: FormGroup;
   classFees: ClassFee[] = [];
+  filteredClassFees: ClassFee[] = [];
   feeTypes: FeeType[] = [];
   paymentPlans: PaymentPlan[] = [];
   classrooms: any[] = [];
   schoolId: string = '';
+  selectedClassroom: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -55,13 +59,36 @@ export class ClassFeesComponent implements OnInit {
     private feeTypeService: FeeTypeService,
     private paymentPlanService: PaymentPlanService,
     private classroomService: ClassroomService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.schoolId = localStorage.getItem('schoolId') || '';
     this.initForm();
+
+    // Lire le paramètre de route pour la classe au démarrage
+    const params = this.route.snapshot.queryParams;
+    if (params['classroom']) {
+      this.selectedClassroom = params['classroom'];
+    }
+
+    // Charger les données
     this.loadData();
+
+    // Écouter les changements de paramètres de route
+    this.route.queryParams.subscribe(params => {
+      const classroomId = params['classroom'];
+      if (classroomId && classroomId !== this.selectedClassroom) {
+        this.selectedClassroom = classroomId;
+        this.filterClassFees();
+      } else if (!classroomId && this.selectedClassroom) {
+        // Si le paramètre est supprimé, réinitialiser le filtre
+        this.selectedClassroom = '';
+        this.filterClassFees();
+      }
+    });
   }
 
   initForm(): void {
@@ -135,6 +162,13 @@ export class ClassFeesComponent implements OnInit {
       this.paymentPlans = (plansRes.data || []).sort((a, b) => a.orderIndex - b.orderIndex);
       this.classrooms = classroomsRes.data || [];
 
+      // Définir une classe par défaut si aucune n'est sélectionnée
+      if (!this.selectedClassroom && this.classrooms.length > 0) {
+        this.selectedClassroom = this.classrooms[0].id;
+        this.updateRoute();
+      }
+
+      // Charger les frais après avoir défini la classe par défaut
       this.loadClassFees();
     } catch (error) {
       console.error('Erreur lors du chargement des données', error);
@@ -143,15 +177,57 @@ export class ClassFeesComponent implements OnInit {
 
   loadClassFees(): void {
     if (!this.schoolId) return;
-    
-    this.classFeeService.getClassFeesBySchool(this.schoolId).subscribe({
+
+    // Passer la classe sélectionnée au service si elle existe
+    this.classFeeService.getClassFeesBySchool(this.schoolId, this.selectedClassroom || undefined).subscribe({
       next: (res) => {
         this.classFees = res.data || [];
+        // Si le service ne filtre pas côté serveur, filtrer côté client
+        if (!this.selectedClassroom) {
+          this.filteredClassFees = [...this.classFees];
+        } else {
+          // Double vérification côté client au cas où l'API ne filtre pas
+          this.filterClassFees();
+        }
       },
       error: (err) => {
         console.error('Erreur lors du chargement des frais de classe', err);
       }
     });
+  }
+
+  filterClassFees(): void {
+    if (!this.classFees || this.classFees.length === 0) {
+      this.filteredClassFees = [];
+      return;
+    }
+
+    if (!this.selectedClassroom) {
+      this.filteredClassFees = [...this.classFees];
+    } else {
+      this.filteredClassFees = this.classFees.filter(fee => {
+        return fee.classRoomId === this.selectedClassroom;
+      });
+    }
+  }
+
+  onClassroomChange(): void {
+    // Recharger les frais avec le nouveau filtre
+    this.loadClassFees();
+    this.updateRoute();
+  }
+
+  updateRoute(): void {
+    // Éviter les mises à jour inutiles de la route
+    const currentClassroom = this.route.snapshot.queryParams['classroom'];
+    if (currentClassroom !== this.selectedClassroom) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { classroom: this.selectedClassroom || null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
   }
 
   deleteClassFee(id: string): void {

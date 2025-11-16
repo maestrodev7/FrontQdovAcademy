@@ -22,8 +22,8 @@ export class SchoolService {
     return this.http.post<any>(this.SCHOOL_API, payload);
   }
 
-  getAcademicYears(): Observable<any[]> {
-    return this.http.get<any[]>(this.ACADEMIC_YEAR_API);
+  getAcademicYears(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(this.ACADEMIC_YEAR_API);
   }
 
   getSchoolsByUserId(userId: string): Observable<ApiResponse<any>> {

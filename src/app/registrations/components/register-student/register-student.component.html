@@ -34,7 +34,7 @@
         <nz-form-label [nzSpan]="6" nzRequired>Année académique</nz-form-label>
         <nz-form-control [nzSpan]="18" nzErrorTip="L'année académique est requise">
           <nz-select formControlName="academicYearId" nzPlaceHolder="Sélectionner une année académique">
-            <nz-option *ngFor="let year of academicYears" [nzValue]="year.id" [nzLabel]="year.label || year.name"></nz-option>
+            <nz-option *ngFor="let year of academicYears" [nzValue]="year.id" [nzLabel]="year.label"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

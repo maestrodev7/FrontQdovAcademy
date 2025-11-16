@@ -1,0 +1,13 @@
+.header-actions {
+  margin-bottom: 16px;
+}
+
+.content-container {
+  margin-top: 16px;
+}
+
+nz-tabset {
+  background: white;
+  padding: 16px;
+}
+

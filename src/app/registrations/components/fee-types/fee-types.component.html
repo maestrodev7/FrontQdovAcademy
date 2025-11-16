@@ -1,0 +1,62 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">
+    <span nz-icon nzType="plus"></span>
+    Créer un type de frais
+  </button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un type de frais"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="feeTypeForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Nom</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le nom est requis">
+          <input nz-input formControlName="name" placeholder="Ex: SCOLARITE, INSCRIPTION, etc." />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Obligatoire</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <label nz-checkbox formControlName="mandatory">
+            Ce type de frais est obligatoire
+          </label>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<div class="content-container">
+  <nz-table [nzData]="feeTypes" [nzShowPagination]="false">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Obligatoire</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let feeType of feeTypes">
+        <td>{{ feeType.name }}</td>
+        <td>
+          <nz-tag [nzColor]="feeType.mandatory ? 'red' : 'default'">
+            {{ feeType.mandatory ? 'Oui' : 'Non' }}
+          </nz-tag>
+        </td>
+        <td>
+          <button nz-button nzType="link" nzDanger (click)="deleteFeeType(feeType.id)">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</div>
+

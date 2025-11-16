@@ -1,0 +1,44 @@
+<button nz-button nzType="primary" (click)="openModal()">
+  <span nz-icon nzType="user-add"></span>
+  Inscrire un élève
+</button>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Inscrire un élève"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="registrationForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="L'élève est requis">
+          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève" nzShowSearch [nzFilterOption]="filterStudentOption">
+            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La classe est requise">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Année académique</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="L'année académique est requise">
+          <nz-select formControlName="academicYearId" nzPlaceHolder="Sélectionner une année académique">
+            <nz-option *ngFor="let year of academicYears" [nzValue]="year.id" [nzLabel]="year.label || year.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+

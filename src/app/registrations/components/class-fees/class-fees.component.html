@@ -1,0 +1,90 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">
+    <span nz-icon nzType="plus"></span>
+    Créer un frais de classe
+  </button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un frais de classe"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+  [nzWidth]="600"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="classFeeForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La classe est requise">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Type de frais</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le type de frais est requis">
+          <nz-select formControlName="feeTypeId" nzPlaceHolder="Sélectionner un type de frais">
+            <nz-option *ngFor="let feeType of feeTypes" [nzValue]="feeType.id" [nzLabel]="feeType.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Plan de paiement (tranche)</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select formControlName="paymentPlanId" nzPlaceHolder="Optionnel - Sélectionner une tranche" nzAllowClear>
+            <nz-option *ngFor="let plan of paymentPlans" [nzValue]="plan.id" [nzLabel]="plan.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Montant</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le montant est requis">
+          <nz-input-number formControlName="amount" [nzMin]="0" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date d'échéance</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date d'échéance est requise">
+          <nz-date-picker formControlName="dueDate" nzFormat="yyyy-MM-dd" style="width: 100%"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<div class="content-container">
+  <nz-table [nzData]="classFees" [nzShowPagination]="false">
+    <thead>
+      <tr>
+        <th>Classe</th>
+        <th>Type de frais</th>
+        <th>Tranche</th>
+        <th>Montant</th>
+        <th>Date d'échéance</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let fee of classFees">
+        <td>{{ fee.classLabel }}</td>
+        <td>{{ fee.feeName }}</td>
+        <td>{{ fee.paymentPlanLabel || '—' }}</td>
+        <td>{{ fee.amount | number }} FCFA</td>
+        <td>{{ fee.dueDate | date: 'dd/MM/yyyy' }}</td>
+        <td>
+          <button nz-button nzType="link" nzDanger (click)="deleteClassFee(fee.id)">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</div>
+

@@ -1,0 +1,127 @@
+<nz-tabset [(nzSelectedIndex)]="activeTab">
+  <!-- Onglet 1: Types de frais -->
+  <nz-tab nzTitle="Types de frais">
+    <app-fee-types></app-fee-types>
+  </nz-tab>
+
+  <!-- Onglet 2: Plans de paiement (Tranches) -->
+  <nz-tab nzTitle="Plans de paiement">
+    <app-payment-plans></app-payment-plans>
+  </nz-tab>
+
+  <!-- Onglet 3: Frais par classe -->
+  <nz-tab nzTitle="Frais par classe">
+    <app-class-fees></app-class-fees>
+  </nz-tab>
+
+  <!-- Onglet 4: Inscriptions et paiements -->
+  <nz-tab nzTitle="Inscriptions">
+    <div class="header-actions">
+      <app-register-student (registrationCreated)="loadRegistrations()"></app-register-student>
+      <div style="margin-top: 16px;">
+        <nz-select
+          [(ngModel)]="selectedClassroom"
+          nzPlaceHolder="Filtrer par classe"
+          nzAllowClear
+          (ngModelChange)="filterByClassroom()"
+          style="width: 300px;"
+        >
+          <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+        </nz-select>
+      </div>
+    </div>
+
+    <div class="content-container">
+      <nz-table [nzData]="registrationsWithPayments" [nzShowPagination]="true" [nzPageSize]="10">
+        <thead>
+          <tr>
+            <th>Élève</th>
+            <th>Classe</th>
+            <th>Frais</th>
+            <th>État</th>
+            <th>Montant payé</th>
+            <th>Reste à payer</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let item of registrationsWithPayments">
+            <tr *ngFor="let fee of item.fees; let first = first">
+              <td *ngIf="first" [attr.rowspan]="item.fees.length">{{ item.registration.studentFullName }}</td>
+              <td *ngIf="first" [attr.rowspan]="item.fees.length">{{ item.registration.classLabel }}</td>
+              <td>
+                <strong>{{ fee.classFee.feeName }}</strong>
+                <span *ngIf="fee.classFee.paymentPlanLabel" style="color: #999; font-size: 12px;">
+                  ({{ fee.classFee.paymentPlanLabel }})
+                </span>
+                <br>
+                <small style="color: #999;">{{ fee.classFee.amount | number }} FCFA</small>
+              </td>
+              <td>
+                <nz-tag [nzColor]="getStatusColor(fee.status)">
+                  {{ getStatusLabel(fee.status) }}
+                </nz-tag>
+              </td>
+              <td>{{ fee.totalPaid | number }} FCFA</td>
+              <td>
+                <span [style.color]="fee.remaining > 0 ? '#ff4d4f' : '#52c41a'">
+                  {{ fee.remaining | number }} FCFA
+                </span>
+              </td>
+              <td *ngIf="first" [attr.rowspan]="item.fees.length">
+                <button nz-button nzType="primary" nzSize="small" (click)="openPaymentModal(item.registration)">
+                  Enregistrer un paiement
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </nz-table>
+    </div>
+  </nz-tab>
+</nz-tabset>
+
+<!-- Modal pour enregistrer un paiement -->
+<nz-modal
+  [(nzVisible)]="isPaymentModalVisible"
+  nzTitle="Enregistrer un paiement"
+  (nzOnCancel)="handlePaymentCancel()"
+  (nzOnOk)="submitPayment()"
+  [nzOkLoading]="isSubmittingPayment"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="selectedRegistration" style="margin-bottom: 16px;">
+      <p><strong>Élève:</strong> {{ selectedRegistration.studentFullName }}</p>
+      <p><strong>Classe:</strong> {{ selectedRegistration.classLabel }}</p>
+    </div>
+    <form nz-form [formGroup]="paymentForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Type de frais</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le type de frais est requis">
+          <nz-select formControlName="classFeeId" nzPlaceHolder="Sélectionner un type de frais">
+            <nz-option 
+              *ngFor="let fee of getClassFeesForSelectedRegistration()" 
+              [nzValue]="fee.id" 
+              [nzLabel]="fee.feeName + (fee.paymentPlanLabel ? ' - ' + fee.paymentPlanLabel : '')"
+            ></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Montant payé</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le montant est requis">
+          <nz-input-number formControlName="amountPaid" [nzMin]="0.01" [nzStep]="100" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de paiement</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date est requise">
+          <nz-date-picker formControlName="paymentDate" nzFormat="yyyy-MM-dd" style="width: 100%"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+

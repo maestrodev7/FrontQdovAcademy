@@ -10,6 +10,7 @@ import { ClassroomComponent } from '../classroom/classroom/classroom.component';
 import { ClassLevelComponent } from '../classroom/class-level/class-level.component';
 import { ParentsComponent } from '../users/parents/parents.component';
 import { StudentsComponent } from '../users/students/students.component';
+import { RegistrationsComponent } from '../registrations/registrations.component';
 
 
 const routes: Routes = [
@@ -25,6 +26,7 @@ const routes: Routes = [
       { path: 'series', component: SeriesComponent },
       { path: 'classrooms', component: ClassroomComponent },
       { path: 'class-levels', component: ClassLevelComponent },
+      { path: 'registrations', component: RegistrationsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   }

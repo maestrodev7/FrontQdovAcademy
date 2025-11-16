@@ -1,0 +1,65 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">
+    <span nz-icon nzType="plus"></span>
+    Créer un plan de paiement
+  </button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer un plan de paiement (tranche)"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="paymentPlanForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Libellé</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le libellé est requis">
+          <input nz-input formControlName="label" placeholder="Ex: 1ère tranche, 2ème tranche, etc." />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date d'échéance</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date d'échéance est requise">
+          <nz-date-picker formControlName="dueDate" nzFormat="yyyy-MM-dd" style="width: 100%"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Ordre</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="L'ordre est requis">
+          <nz-input-number formControlName="orderIndex" [nzMin]="1" [nzMax]="12" style="width: 100%"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<div class="content-container">
+  <nz-table [nzData]="paymentPlans" [nzShowPagination]="false">
+    <thead>
+      <tr>
+        <th>Libellé</th>
+        <th>Date d'échéance</th>
+        <th>Ordre</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let plan of paymentPlans">
+        <td>{{ plan.label }}</td>
+        <td>{{ plan.dueDate | date: 'dd/MM/yyyy' }}</td>
+        <td>{{ plan.orderIndex }}</td>
+        <td>
+          <button nz-button nzType="link" nzDanger (click)="deletePaymentPlan(plan.id)">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+</div>
+

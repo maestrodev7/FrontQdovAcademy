@@ -10,6 +10,7 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { FeeTypesComponent } from './components/fee-types/fee-types.component';
 import { PaymentPlansComponent } from './components/payment-plans/payment-plans.component';
@@ -41,6 +42,7 @@ import { firstValueFrom } from 'rxjs';
     NzDatePickerModule,
     NzSelectModule,
     NzIconModule,
+    NzToolTipModule,
     ReactiveFormsModule,
     FormsModule,
     FeeTypesComponent,
@@ -63,6 +65,8 @@ export class RegistrationsComponent implements OnInit {
   isSubmittingPayment = false;
   paymentForm!: FormGroup;
   selectedRegistration: Registration | null = null;
+  isFeesStatusModalVisible = false;
+  selectedFeesStatus: any = null;
 
   constructor(
     private registrationService: RegistrationService,
@@ -257,6 +261,47 @@ export class RegistrationsComponent implements OnInit {
       return [];
     }
     return this.classFees.filter(cf => cf.classRoomId === this.selectedRegistration!.classRoomId);
+  }
+
+  openFeesStatusModal(item: any): void {
+    this.selectedFeesStatus = item;
+    this.isFeesStatusModalVisible = true;
+  }
+
+  handleFeesStatusCancel(): void {
+    this.isFeesStatusModalVisible = false;
+    this.selectedFeesStatus = null;
+  }
+
+  getOverallStatusColor(fees: ClassFeeWithPayment[]): string {
+    if (!fees || fees.length === 0) return '#999';
+    
+    const allPaid = fees.every(f => f.status === 'paid');
+    const allUnpaid = fees.every(f => f.status === 'unpaid');
+    
+    if (allPaid) return '#52c41a'; // Vert
+    if (allUnpaid) return '#ff4d4f'; // Rouge
+    return '#faad14'; // Orange (mixte)
+  }
+
+  getFeesStatusTooltip(fees: ClassFeeWithPayment[]): string {
+    if (!fees || fees.length === 0) return 'Aucun frais';
+    
+    const paid = fees.filter(f => f.status === 'paid').length;
+    const partial = fees.filter(f => f.status === 'partial').length;
+    const unpaid = fees.filter(f => f.status === 'unpaid').length;
+    
+    return `Payé: ${paid} | Partiel: ${partial} | Non payé: ${unpaid}`;
+  }
+
+  getTotalPaid(fees: ClassFeeWithPayment[]): number {
+    if (!fees || fees.length === 0) return 0;
+    return fees.reduce((sum, fee) => sum + fee.totalPaid, 0);
+  }
+
+  getTotalRemaining(fees: ClassFeeWithPayment[]): number {
+    if (!fees || fees.length === 0) return 0;
+    return fees.reduce((sum, fee) => sum + fee.remaining, 0);
   }
 }
 

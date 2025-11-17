@@ -36,6 +36,7 @@ export class RegisterStudentComponent implements OnInit {
   students: any[] = [];
   classrooms: any[] = [];
   academicYears: any[] = [];
+  currentAcademicYear: any = null;
   schoolId: string = '';
 
   constructor(
@@ -64,7 +65,14 @@ export class RegisterStudentComponent implements OnInit {
   openModal(): void {
     this.isModalVisible = true;
     this.registrationForm.reset();
-    this.loadData();
+    this.loadData().then(() => {
+      // Réinitialiser l'année académique après le chargement
+      if (this.currentAcademicYear) {
+        this.registrationForm.patchValue({
+          academicYearId: this.currentAcademicYear.id
+        });
+      }
+    });
   }
 
   handleCancel(): void {
@@ -121,6 +129,22 @@ export class RegisterStudentComponent implements OnInit {
         endDate: year.endDate,
         active: year.active
       }));
+
+      // Récupérer l'année académique active
+      this.currentAcademicYear = this.academicYears.find((year: any) => year.active === true);
+
+      // Si une année active existe, l'assigner automatiquement au formulaire
+      if (this.currentAcademicYear) {
+        this.registrationForm.patchValue({
+          academicYearId: this.currentAcademicYear.id
+        });
+      } else if (this.academicYears.length > 0) {
+        // Si aucune année active, prendre la première
+        this.currentAcademicYear = this.academicYears[0];
+        this.registrationForm.patchValue({
+          academicYearId: this.currentAcademicYear.id
+        });
+      }
 
     } catch (error) {
       console.error('Erreur lors du chargement des données', error);

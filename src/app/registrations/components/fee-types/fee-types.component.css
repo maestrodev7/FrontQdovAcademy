@@ -4,5 +4,18 @@
 
 .content-container {
   margin-top: 16px;
+  width: 100%;
+}
+
+.content-container nz-table {
+  width: 100%;
+}
+
+.content-container ::ng-deep .ant-table {
+  width: 100% !important;
+}
+
+.content-container ::ng-deep .ant-table-wrapper {
+  width: 100% !important;
 }
 

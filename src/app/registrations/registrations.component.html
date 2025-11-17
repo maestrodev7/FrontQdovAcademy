@@ -37,49 +37,86 @@
           <tr>
             <th>Élève</th>
             <th>Classe</th>
-            <th>Frais</th>
-            <th>État</th>
-            <th>Montant payé</th>
-            <th>Reste à payer</th>
+            <th>Nombre de frais</th>
+            <th>Total payé</th>
+            <th>Total restant</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let item of registrationsWithPayments">
-            <tr *ngFor="let fee of item.fees; let first = first">
-              <td *ngIf="first" [attr.rowspan]="item.fees.length">{{ item.registration.studentFullName }}</td>
-              <td *ngIf="first" [attr.rowspan]="item.fees.length">{{ item.registration.classLabel }}</td>
-              <td>
-                <strong>{{ fee.classFee.feeName }}</strong>
-                <span *ngIf="fee.classFee.paymentPlanLabel" style="color: #999; font-size: 12px;">
-                  ({{ fee.classFee.paymentPlanLabel }})
-                </span>
-                <br>
-                <small style="color: #999;">{{ fee.classFee.amount | number }} FCFA</small>
-              </td>
-              <td>
-                <nz-tag [nzColor]="getStatusColor(fee.status)">
-                  {{ getStatusLabel(fee.status) }}
-                </nz-tag>
-              </td>
-              <td>{{ fee.totalPaid | number }} FCFA</td>
-              <td>
-                <span [style.color]="fee.remaining > 0 ? '#ff4d4f' : '#52c41a'">
-                  {{ fee.remaining | number }} FCFA
-                </span>
-              </td>
-              <td *ngIf="first" [attr.rowspan]="item.fees.length">
-                <button nz-button nzType="primary" nzSize="small" (click)="openPaymentModal(item.registration)">
-                  Enregistrer un paiement
-                </button>
-              </td>
-            </tr>
-          </ng-container>
+          <tr *ngFor="let item of registrationsWithPayments">
+            <td>{{ item.registration.studentFullName }}</td>
+            <td>{{ item.registration.classLabel }}</td>
+            <td>{{ item.fees.length }}</td>
+            <td>{{ getTotalPaid(item.fees) | number }} FCFA</td>
+            <td>
+              <span [style.color]="getTotalRemaining(item.fees) > 0 ? '#ff4d4f' : '#52c41a'">
+                {{ getTotalRemaining(item.fees) | number }} FCFA
+              </span>
+            </td>
+            <td>
+              <button nz-button nzType="primary" nzSize="small" (click)="openPaymentModal(item.registration)" style="margin-right: 8px;">
+                Enregistrer un paiement
+              </button>
+              <button nz-button nzType="default" nzSize="small" [nz-tooltip]="getFeesStatusTooltip(item.fees)" (click)="openFeesStatusModal(item)">
+                <span nz-icon nzType="info-circle" [style.color]="getOverallStatusColor(item.fees)"></span>
+              </button>
+            </td>
+          </tr>
         </tbody>
       </nz-table>
     </div>
   </nz-tab>
 </nz-tabset>
+
+<!-- Modal pour afficher l'état des frais -->
+<nz-modal
+  [(nzVisible)]="isFeesStatusModalVisible"
+  nzTitle="État des frais"
+  (nzOnCancel)="handleFeesStatusCancel()"
+  [nzFooter]="null"
+  [nzWidth]="600"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="selectedFeesStatus">
+      <p><strong>Élève:</strong> {{ selectedFeesStatus.registration.studentFullName }}</p>
+      <p><strong>Classe:</strong> {{ selectedFeesStatus.registration.classLabel }}</p>
+      <nz-table [nzData]="selectedFeesStatus.fees" [nzShowPagination]="false" style="margin-top: 16px;">
+        <thead>
+          <tr>
+            <th>Type de frais</th>
+            <th>Montant</th>
+            <th>Payé</th>
+            <th>Reste</th>
+            <th>État</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let fee of selectedFeesStatus.fees">
+            <td>
+              <strong>{{ fee.classFee.feeName }}</strong>
+              <span *ngIf="fee.classFee.paymentPlanLabel" style="color: #999; font-size: 12px;">
+                ({{ fee.classFee.paymentPlanLabel }})
+              </span>
+            </td>
+            <td>{{ fee.classFee.amount | number }} FCFA</td>
+            <td>{{ fee.totalPaid | number }} FCFA</td>
+            <td>
+              <span [style.color]="fee.remaining > 0 ? '#ff4d4f' : '#52c41a'">
+                {{ fee.remaining | number }} FCFA
+              </span>
+            </td>
+            <td>
+              <nz-tag [nzColor]="getStatusColor(fee.status)">
+                {{ getStatusLabel(fee.status) }}
+              </nz-tag>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
+  </ng-container>
+</nz-modal>
 
 <!-- Modal pour enregistrer un paiement -->
 <nz-modal

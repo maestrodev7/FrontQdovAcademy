@@ -10,11 +10,13 @@
   [nzOkLoading]="isSubmitting"
 >
   <ng-container *nzModalContent>
+    <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+      <strong>Erreur :</strong> {{ formError }}
+    </div>
     <app-add-classroom
       [form]="classroomForm"
       [levels]="levels"
       [series]="series"
-      [schools]="schools"
       (formChange)="onFormChange($event)"
     ></app-add-classroom>
   </ng-container>

@@ -32,21 +32,37 @@ export class UsersService {
     return this.http.post<any>(this.USER_SCHOOL_API, payload);
   }
 
-  getSchoolsWithAdmins(): Observable<any> {
-    return this.http.get<any>(`${this.USER_SCHOOL_API}/schools-with-admins`);
-  }
+  getSchoolsWithAdmins(): Observable<any> {
+    return this.http.get<any>(`${this.USER_SCHOOL_API}/schools-with-admins`);
+  }
 
-  createAdminForSchool(payload: any): Observable<any> {
-    const userPayload = { ...payload, roles: ['ADMIN'] };
+  getSchoolsWithPromoteurs(): Observable<any> {
+    return this.http.get<any>(`${this.USER_SCHOOL_API}/schools-with-admins`);
+  }
 
-    return this.createUser(userPayload).pipe(
-      switchMap((res: any) => {
-        const userId = res.data?.id || res.id;
-        const schoolId = payload.schoolId;
-        return this.assignUserToSchool(userId, schoolId, 'ADMIN');
-      })
-    );
-  }
+  createAdminForSchool(payload: any): Observable<any> {
+    const userPayload = { ...payload, roles: ['ADMIN'] };
+
+    return this.createUser(userPayload).pipe(
+      switchMap((res: any) => {
+        const userId = res.data?.id || res.id;
+        const schoolId = payload.schoolId;
+        return this.assignUserToSchool(userId, schoolId, 'ADMIN');
+      })
+    );
+  }
+
+  createPromoteurForSchool(payload: any): Observable<any> {
+    const userPayload = { ...payload, roles: ['PROMOTEUR'] };
+
+    return this.createUser(userPayload).pipe(
+      switchMap((res: any) => {
+        const userId = res.data?.id || res.id;
+        const schoolId = payload.schoolId;
+        return this.assignUserToSchool(userId, schoolId, 'PROMOTEUR');
+      })
+    );
+  }
 
     createTeacherForSchool(payload: any): Observable<any> {
     const userPayload = { ...payload, roles: ['ENSEIGNANT'] };

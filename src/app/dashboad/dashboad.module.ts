@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DashboadComponent } from './dashboad.component';
 import { RouterModule, Routes } from '@angular/router';
 import { AdminsComponent } from '../users/admins/admins.component';
+import { PromoteursComponent } from '../users/promoteurs/promoteurs.component';
 import { HomeComponent } from './components/home/home.component';
 import { TeachersComponent } from '../users/teachers/teachers.component';
 import { SeriesComponent } from '../classroom/series/series.component';
@@ -11,6 +12,7 @@ import { ClassLevelComponent } from '../classroom/class-level/class-level.compon
 import { ParentsComponent } from '../users/parents/parents.component';
 import { StudentsComponent } from '../users/students/students.component';
 import { RegistrationsComponent } from '../registrations/registrations.component';
+import { SchoolParametersComponent } from '../school/components/school-parameters/school-parameters.component';
 
 
 const routes: Routes = [
@@ -20,6 +22,7 @@ const routes: Routes = [
     children: [
       { path: 'home', component: HomeComponent },
       { path: 'admins', component: AdminsComponent },
+      { path: 'promoteurs', component: PromoteursComponent },
       { path: 'teachers', component: TeachersComponent},
       { path: 'parents', component: ParentsComponent },
       { path: 'students', component: StudentsComponent},
@@ -27,6 +30,7 @@ const routes: Routes = [
       { path: 'classrooms', component: ClassroomComponent },
       { path: 'class-levels', component: ClassLevelComponent },
       { path: 'registrations', component: RegistrationsComponent },
+      { path: 'parameters', component: SchoolParametersComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   }

@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { UsersService } from '../services/users.service';
 import { AddTeacherComponent } from '../add-teacher/add-teacher.component';
 import { DynamicTableComponent } from '../../classroom/ui/dynamic-table/dynamic-table.component';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-teachers',
@@ -29,7 +30,8 @@ export class TeachersComponent implements OnInit {
   isModalVisible = false;
   isSubmitting = false;
   adminForm!: FormGroup;
-    teachers: any[] = [];
+  teachers: any[] = [];
+  formError: string = '';
 
   columns = [
     { key: 'fullName', label: 'Nom complet' },
@@ -38,7 +40,11 @@ export class TeachersComponent implements OnInit {
     { key: 'role', label: 'Rôle' }
   ];
 
-  constructor(private fb: FormBuilder, private userService: UsersService) {}
+  constructor(
+    private fb: FormBuilder,
+    private userService: UsersService,
+    private message: NzMessageService
+  ) {}
 
   ngOnInit(): void {
     this.loadTeachers();
@@ -55,9 +61,11 @@ export class TeachersComponent implements OnInit {
 
   openModal(): void {
     this.isModalVisible = true;
+    this.formError = '';
+    this.adminForm.reset();
   }
 
-    private loadTeachers(): void {
+  private loadTeachers(): void {
     const schoolId = localStorage.getItem('schoolId');
     console.log(schoolId);
 
@@ -80,6 +88,8 @@ export class TeachersComponent implements OnInit {
 
   handleCancel(): void {
     this.isModalVisible = false;
+    this.formError = '';
+    this.adminForm.reset();
   }
 
   onFormChange(formValue: any): void {
@@ -87,16 +97,22 @@ export class TeachersComponent implements OnInit {
   }
 
   submitForm(): void {
-    if (this.adminForm.invalid) return;
+    // Marquer tous les champs comme touchés pour afficher les erreurs
+    Object.keys(this.adminForm.controls).forEach(key => {
+      this.adminForm.get(key)?.markAsTouched();
+    });
+
+    if (this.adminForm.invalid) {
+      this.formError = 'Veuillez remplir tous les champs requis correctement.';
+      return;
+    }
 
     this.isSubmitting = true;
+    this.formError = '';
     const payload = this.adminForm.value;
 
     this.userService.createTeacherForSchool(payload).subscribe({
       next: (res) => {
-        this.isSubmitting = false;
-        this.isModalVisible = false;
-
         const newTeacher = {
           id: res.data?.userId || payload.username,
           fullName: `${payload.firstName} ${payload.lastName}`,
@@ -107,12 +123,72 @@ export class TeachersComponent implements OnInit {
 
         this.teachers = [newTeacher, ...this.teachers];
 
-        this.adminForm.reset
+        this.message.success('Enseignant créé avec succès !');
+        this.isSubmitting = false;
+        this.isModalVisible = false;
+        this.adminForm.reset();
+        this.formError = '';
       },
       error: (err) => {
+        console.error('❌ Erreur :', err);
         this.isSubmitting = false;
+        
+        // Extraire les messages d'erreur de l'API
+        const errorMessage = this.extractErrorMessage(err);
+        
+        this.formError = errorMessage;
+        this.message.error(errorMessage);
       },
     });
+  }
+
+  private extractErrorMessage(err: any): string {
+    if (!err?.error) {
+      return 'Une erreur est survenue lors de la création de l\'enseignant.';
+    }
+
+    const errorObj = err.error;
+    
+    // Si c'est un objet avec des propriétés correspondant aux champs du formulaire
+    if (typeof errorObj === 'object' && !errorObj.message && !errorObj.error) {
+      const fieldErrors: string[] = [];
+      
+      // Parcourir toutes les propriétés de l'objet d'erreur
+      Object.keys(errorObj).forEach(key => {
+        const errorValue = errorObj[key];
+        if (typeof errorValue === 'string') {
+          // Mapper les noms de champs pour un affichage plus lisible
+          const fieldName = this.getFieldLabel(key);
+          fieldErrors.push(`${fieldName}: ${errorValue}`);
+        } else if (Array.isArray(errorValue)) {
+          // Si c'est un tableau de messages
+          const fieldName = this.getFieldLabel(key);
+          fieldErrors.push(`${fieldName}: ${errorValue.join(', ')}`);
+        }
+      });
+      
+      if (fieldErrors.length > 0) {
+        return fieldErrors.join('\n');
+      }
+    }
+    
+    // Messages d'erreur généraux
+    return errorObj.message || 
+           errorObj.error || 
+           (typeof errorObj === 'string' ? errorObj : 'Une erreur est survenue lors de la création de l\'enseignant.');
+  }
+
+  private getFieldLabel(fieldName: string): string {
+    const labels: { [key: string]: string } = {
+      'firstName': 'Prénom',
+      'lastName': 'Nom',
+      'username': 'Nom d\'utilisateur',
+      'email': 'Email',
+      'phoneNumber': 'Téléphone',
+      'password': 'Mot de passe',
+      'schoolId': 'École'
+    };
+    return labels[fieldName] || fieldName;
   }
 
 

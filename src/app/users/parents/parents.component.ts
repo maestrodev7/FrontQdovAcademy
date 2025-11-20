@@ -8,6 +8,7 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { CommonModule } from '@angular/common';
 import { DynamicTableComponent } from '../../classroom/ui/dynamic-table/dynamic-table.component';
+import { NzMessageService } from 'ng-zorro-antd/message';
 
 @Component({
   selector: 'app-parents',
@@ -30,6 +31,7 @@ export class ParentsComponent implements OnInit {
     isSubmitting = false;
     parentForm!: FormGroup;
     parents: any[] = [];
+    formError: string = '';
 
   columns = [
     { key: 'fullName', label: 'Nom complet' },
@@ -37,7 +39,11 @@ export class ParentsComponent implements OnInit {
     { key: 'phoneNumber', label: 'Téléphone' },
     { key: 'role', label: 'Rôle' }
   ];
-  constructor(private fb: FormBuilder, private userService: UsersService) {}
+  constructor(
+    private fb: FormBuilder,
+    private userService: UsersService,
+    private message: NzMessageService
+  ) {}
 
   ngOnInit(): void {
     this.loadParents();
@@ -53,10 +59,14 @@ export class ParentsComponent implements OnInit {
 
   openModal(): void {
     this.isModalVisible = true;
+    this.formError = '';
+    this.parentForm.reset();
   }
 
   handleCancel(): void {
     this.isModalVisible = false;
+    this.formError = '';
+    this.parentForm.reset();
   }
 
   onFormChange(formValue: any): void {
@@ -64,62 +74,100 @@ export class ParentsComponent implements OnInit {
   }
 
 submitForm(): void {
-  if (this.parentForm.invalid) return;
+  // Marquer tous les champs comme touchés pour afficher les erreurs
+  Object.keys(this.parentForm.controls).forEach(key => {
+    this.parentForm.get(key)?.markAsTouched();
+  });
+
+  if (this.parentForm.invalid) {
+    this.formError = 'Veuillez remplir tous les champs requis correctement.';
+    return;
+  }
 
   this.isSubmitting = true;
-    const payload = {
+  this.formError = '';
+  const payload = {
     ...this.parentForm.value,
     roles: ['PARENT'],
   };
 
   this.userService.createUser(payload).subscribe({
     next: (res) => {
-      this.isSubmitting = false;
-      this.isModalVisible = false;
-
       const newParent = {
-        id: res.data?.userId || payload.username,
+        id: res.data?.id || res.data?.userId || payload.username,
         fullName: `${payload.firstName} ${payload.lastName}`,
         email: payload.email,
         phoneNumber: payload.phoneNumber,
-        role: ['PARENT'],
+        role: 'PARENT',
       };
 
       this.parents = [newParent, ...this.parents];
-      this.parentForm.reset();
-    },
-
-    error: (err) => {
+      
+      this.message.success('Parent créé avec succès !');
       this.isSubmitting = false;
-
-      Object.keys(this.parentForm.controls).forEach((key) => {
-        this.parentForm.get(key)?.setErrors(null);
-      });
-      this.parentForm.setErrors(null);
-
-      if (err.status === 400 && err.error) {
-        const errorData = err.error;
-
-        if (errorData.error) {
-          this.parentForm.setErrors({ apiError: errorData.error });
-        }
-        else {
-          Object.keys(errorData).forEach((key) => {
-            const control = this.parentForm.get(key);
-            if (control) {
-              control.setErrors({ apiError: errorData[key] });
-            } else {
-              this.parentForm.setErrors({ apiError: errorData[key] });
-            }
-          });
-        }
-      } else {
-        this.parentForm.setErrors({
-          apiError: 'Une erreur est survenue. Veuillez réessayer plus tard.',
-        });
-      }
+      this.isModalVisible = false;
+      this.parentForm.reset();
+      this.formError = '';
+    },
+    error: (err) => {
+      console.error('❌ Erreur :', err);
+      this.isSubmitting = false;
+      
+      // Extraire les messages d'erreur de l'API
+      const errorMessage = this.extractErrorMessage(err);
+      
+      this.formError = errorMessage;
+      this.message.error(errorMessage);
     },
   });
+}
+
+private extractErrorMessage(err: any): string {
+  if (!err?.error) {
+    return 'Une erreur est survenue lors de la création du parent.';
+  }
+
+  const errorObj = err.error;
+  
+  // Si c'est un objet avec des propriétés correspondant aux champs du formulaire
+  if (typeof errorObj === 'object' && !errorObj.message && !errorObj.error) {
+    const fieldErrors: string[] = [];
+    
+    // Parcourir toutes les propriétés de l'objet d'erreur
+    Object.keys(errorObj).forEach(key => {
+      const errorValue = errorObj[key];
+      if (typeof errorValue === 'string') {
+        // Mapper les noms de champs pour un affichage plus lisible
+        const fieldName = this.getFieldLabel(key);
+        fieldErrors.push(`${fieldName}: ${errorValue}`);
+      } else if (Array.isArray(errorValue)) {
+        // Si c'est un tableau de messages
+        const fieldName = this.getFieldLabel(key);
+        fieldErrors.push(`${fieldName}: ${errorValue.join(', ')}`);
+      }
+    });
+    
+    if (fieldErrors.length > 0) {
+      return fieldErrors.join('\n');
+    }
+  }
+  
+  // Messages d'erreur généraux
+  return errorObj.message || 
+         errorObj.error || 
+         (typeof errorObj === 'string' ? errorObj : 'Une erreur est survenue lors de la création du parent.');
+}
+
+private getFieldLabel(fieldName: string): string {
+  const labels: { [key: string]: string } = {
+    'firstName': 'Prénom',
+    'lastName': 'Nom',
+    'username': 'Nom d\'utilisateur',
+    'email': 'Email',
+    'phoneNumber': 'Téléphone',
+    'password': 'Mot de passe'
+  };
+  return labels[fieldName] || fieldName;
 }
 
 

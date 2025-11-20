@@ -3,6 +3,7 @@
     <h2>Sélectionnez une école</h2>
 
     <button
+      *ngIf="isSuperAdmin()"
       nz-button
       nzType="primary"
       style="position: absolute; top: 0; right: 0;"

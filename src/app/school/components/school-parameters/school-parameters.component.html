@@ -1,0 +1,87 @@
+<nz-spin [nzSpinning]="loading || academicYearsLoading">
+  <div class="parameters-container" *ngIf="school; else emptyState">
+    <nz-card nzTitle="Année académique en cours" nzBordered="false">
+      <div class="school-info">
+        <p><strong>École :</strong> {{ school.name }}</p>
+        <p><strong>Adresse :</strong> {{ school.address }}</p>
+        <p><strong>Téléphone :</strong> {{ school.phoneNumber }}</p>
+      </div>
+
+      <div class="year-actions">
+        <button nz-button nzType="default" (click)="openYearModal()">
+          Créer une année académique
+        </button>
+      </div>
+
+      <div class="academic-year-section">
+        <label for="academicYearSelect">Sélectionner l'année académique</label>
+        <nz-select
+          id="academicYearSelect"
+          style="width: 100%; margin: 8px 0 16px;"
+          [(ngModel)]="selectedAcademicYearId"
+          nzPlaceHolder="Choisissez une année"
+        >
+          <nz-option
+            *ngFor="let year of academicYears"
+            [nzValue]="year.id"
+            [nzLabel]="year.startDate + ' - ' + year.endDate + (year.active ? ' (actuelle)' : '')"
+          ></nz-option>
+        </nz-select>
+      </div>
+
+      <div
+        *ngIf="formError"
+        class="error-message"
+      >
+        <strong>Erreur :</strong> {{ formError }}
+      </div>
+
+      <button
+        nz-button
+        nzType="primary"
+        [disabled]="!selectedAcademicYearId"
+        [nzLoading]="saving"
+        (click)="saveCurrentAcademicYear()"
+      >
+        Enregistrer
+      </button>
+    </nz-card>
+  </div>
+</nz-spin>
+
+<ng-template #emptyState>
+  <nz-card nzBordered="false">
+    <p>
+      {{ formError || 'Aucune école disponible. Sélectionnez une école avant de modifier les paramètres.' }}
+    </p>
+  </nz-card>
+</ng-template>
+
+<nz-modal
+  [(nzVisible)]="isYearModalVisible"
+  nzTitle="Créer une année académique"
+  (nzOnCancel)="handleYearModalCancel()"
+  (nzOnOk)="submitYearForm()"
+  [nzOkLoading]="yearModalLoading"
+  nzOkText="Créer"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="yearForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Début</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Date de début requise">
+          <input nz-input type="date" formControlName="startDate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Fin</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Date de fin requise">
+          <input nz-input type="date" formControlName="endDate" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+

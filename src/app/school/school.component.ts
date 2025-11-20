@@ -1,4 +1,3 @@
-import { ReactiveFormsModule } from '@angular/forms';
 import { Component, OnInit } from '@angular/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -15,14 +14,12 @@ import { School } from './interfaces/school';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import {  NzFlexModule } from 'ng-zorro-antd/flex';
 import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
-
 @Component({
   selector: 'app-school',
   templateUrl: './school.component.html',
   styleUrls: ['./school.component.css'],
   standalone: true,
   imports: [
-    ReactiveFormsModule,
     NzCardModule,
     NzSpinModule,
     NzListModule,
@@ -37,6 +34,7 @@ import { NzSegmentedModule } from 'ng-zorro-antd/segmented';
 export class SchoolComponent implements OnInit {
   schools: School[] = [];
   loading = true;
+  userRole: string = '';
 
   constructor(
     private schoolService: SchoolService,
@@ -48,6 +46,7 @@ ngOnInit(): void {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
+  this.userRole = role || '';
 
   if (role === 'SUPER_ADMIN') {
     this.loadSchools();
@@ -61,6 +60,10 @@ ngOnInit(): void {
       this.loading = false;
     }
   }
+}
+
+isSuperAdmin(): boolean {
+  return this.userRole === 'SUPER_ADMIN' || (typeof this.userRole === 'string' && this.userRole.includes('SUPER_ADMIN'));
 }
 
 

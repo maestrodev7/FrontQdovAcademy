@@ -2,7 +2,12 @@
   <button nz-button nzType="primary" (click)="openModal()">Créer un admin</button>
 </div>
 
-<app-table></app-table>
+<app-dynamic-table
+  [title]="'Liste des administrateurs'"
+  [columns]="columns"
+  [data]="admins"
+  [selectable]="true"
+></app-dynamic-table>
 
 <nz-modal
   [(nzVisible)]="isModalVisible"
@@ -12,6 +17,9 @@
   [nzOkLoading]="isSubmitting"
 >
 <ng-container *nzModalContent>
+  <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+    <strong>Erreur :</strong> {{ formError }}
+  </div>
   <app-add-admin
     [form]="adminForm"
     (formChange)="onFormChange($event)"

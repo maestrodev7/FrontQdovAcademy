@@ -1,10 +1,17 @@
 <div class="header-actions">
-  <button nz-button nzType="primary" (click)="openModal()">Créer un eleve</button>
+  <button nz-button nzType="primary" (click)="openModal()">Créer un promoteur</button>
 </div>
+
+<app-dynamic-table
+  [title]="'Liste des promoteurs'"
+  [columns]="columns"
+  [data]="promoteurs"
+  [selectable]="true"
+></app-dynamic-table>
 
 <nz-modal
   [(nzVisible)]="isModalVisible"
-  nzTitle="Créer un Élève"
+  nzTitle="Créer un promoteur"
   (nzOnCancel)="handleCancel()"
   (nzOnOk)="submitForm()"
   [nzOkLoading]="isSubmitting"
@@ -13,18 +20,10 @@
   <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
     <strong>Erreur :</strong> {{ formError }}
   </div>
-  <app-add-student
-    [form]="studentForm"
+  <app-add-admin
+    [form]="promoteurForm"
     (formChange)="onFormChange($event)"
-  ></app-add-student>
+  ></app-add-admin>
 </ng-container>
 </nz-modal>
 
-<div class="content-container">
-  <app-dynamic-table
-    [title]="'Élèves'"
-    [columns]="columns"
-    [data]="students"
-    [selectable]="true"
-  ></app-dynamic-table>
-</div>

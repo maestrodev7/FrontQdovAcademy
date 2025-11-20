@@ -1,0 +1,29 @@
+.parameters-container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.school-info {
+  margin-bottom: 16px;
+}
+
+.year-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.academic-year-section label {
+  font-weight: 600;
+}
+
+.error-message {
+  color: #ff4d4f;
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  white-space: pre-line;
+}
+

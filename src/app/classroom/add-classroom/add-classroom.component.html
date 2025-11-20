@@ -18,12 +18,5 @@
         <nz-option *ngFor="let serie of series" [nzValue]="serie.id" [nzLabel]="serie.name"></nz-option>
       </nz-select>
     </div>
-
-    <div nz-col nzSpan="24">
-      <label>École</label>
-      <nz-select formControlName="schoolId" nzPlaceHolder="Sélectionner une école">
-        <nz-option *ngFor="let school of schools" [nzValue]="school.id" [nzLabel]="school.name"></nz-option>
-      </nz-select>
-    </div>
   </div>
 </form>

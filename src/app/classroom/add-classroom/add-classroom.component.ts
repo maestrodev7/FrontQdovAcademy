@@ -25,7 +25,6 @@ export class AddClassroomComponent implements OnInit {
   @Input() form!: FormGroup;
   @Input() levels: any[] = [];
   @Input() series: any[] = [];
-  @Input() schools: any[] = [];
 
   @Output() formChange = new EventEmitter<any>();
 

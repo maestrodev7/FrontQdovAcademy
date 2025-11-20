@@ -1,41 +1,61 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
   <div nz-row [nzGutter]="16">
     <div nz-col nzSpan="12">
-      <label>Prénom</label>
-      <input nz-input formControlName="firstName" />
+      <label>Prénom <span style="color: red;">*</span></label>
+      <input nz-input formControlName="firstName" [class.ant-input-status-error]="form.get('firstName')?.invalid && form.get('firstName')?.touched" />
+      <div *ngIf="form.get('firstName')?.invalid && form.get('firstName')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le prénom est requis
+      </div>
     </div>
 
     <div nz-col nzSpan="12">
-      <label>Nom</label>
-      <input nz-input formControlName="lastName" />
+      <label>Nom <span style="color: red;">*</span></label>
+      <input nz-input formControlName="lastName" [class.ant-input-status-error]="form.get('lastName')?.invalid && form.get('lastName')?.touched" />
+      <div *ngIf="form.get('lastName')?.invalid && form.get('lastName')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le nom est requis
+      </div>
     </div>
 
     <div nz-col nzSpan="12">
-      <label>Nom d'utilisateur</label>
-      <input nz-input formControlName="username" />
+      <label>Nom d'utilisateur <span style="color: red;">*</span></label>
+      <input nz-input formControlName="username" [class.ant-input-status-error]="form.get('username')?.invalid && form.get('username')?.touched" />
+      <div *ngIf="form.get('username')?.invalid && form.get('username')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le nom d'utilisateur est requis
+      </div>
     </div>
 
     <div nz-col nzSpan="12">
-      <label>Email</label>
-      <input nz-input formControlName="email" />
+      <label>Email <span style="color: red;">*</span></label>
+      <input nz-input formControlName="email" type="email" [class.ant-input-status-error]="form.get('email')?.invalid && form.get('email')?.touched" />
+      <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        <span *ngIf="form.get('email')?.errors?.['required']">L'email est requis</span>
+        <span *ngIf="form.get('email')?.errors?.['email']">L'email n'est pas valide</span>
+      </div>
     </div>
 
     <div nz-col nzSpan="12">
-      <label>Téléphone</label>
-      <input nz-input formControlName="phoneNumber" />
+      <label>Téléphone <span style="color: red;">*</span></label>
+      <input nz-input formControlName="phoneNumber" [class.ant-input-status-error]="form.get('phoneNumber')?.invalid && form.get('phoneNumber')?.touched" />
+      <div *ngIf="form.get('phoneNumber')?.invalid && form.get('phoneNumber')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le téléphone est requis
+      </div>
     </div>
 
     <div nz-col nzSpan="12">
-      <label>Mot de passe</label>
-      <input nz-input type="password" formControlName="password" />
+      <label>Mot de passe <span style="color: red;">*</span></label>
+      <input nz-input type="password" formControlName="password" [class.ant-input-status-error]="form.get('password')?.invalid && form.get('password')?.touched" />
+      <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le mot de passe est requis
+      </div>
     </div>
 
     <div nz-col nzSpan="24">
-      <label>École</label>
+      <label>École <span style="color: red;">*</span></label>
       <nz-select
         formControlName="schoolId"
         nzPlaceHolder="Sélectionner une école"
         [nzLoading]="isLoading"
+        [class.ant-select-status-error]="form.get('schoolId')?.invalid && form.get('schoolId')?.touched"
       >
         <nz-option
           *ngFor="let school of schools"
@@ -43,6 +63,9 @@
           [nzLabel]="school.name"
         ></nz-option>
       </nz-select>
+      <div *ngIf="form.get('schoolId')?.invalid && form.get('schoolId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        L'école est requise
+      </div>
     </div>
   </div>
 </form>

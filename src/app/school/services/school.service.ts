@@ -34,4 +34,15 @@ export class SchoolService {
   createAcademicYear(payload: any): Observable<any> {
     return this.http.post<any>(this.ACADEMIC_YEAR_API, payload);
   }
+
+  getSchoolById(id: string): Observable<ApiResponse<School>> {
+    return this.http.get<ApiResponse<School>>(`${this.SCHOOL_API}/${id}`);
+  }
+
+  updateCurrentAcademicYear(schoolId: string, academicYearId: string): Observable<ApiResponse<School>> {
+    return this.http.put<ApiResponse<School>>(
+      `${this.SCHOOL_API}/${schoolId}/current-academic-year/${academicYearId}`,
+      {}
+    );
+  }
 }

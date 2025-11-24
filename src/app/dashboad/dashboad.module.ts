@@ -13,6 +13,8 @@ import { ParentsComponent } from '../users/parents/parents.component';
 import { StudentsComponent } from '../users/students/students.component';
 import { RegistrationsComponent } from '../registrations/registrations.component';
 import { SchoolParametersComponent } from '../school/components/school-parameters/school-parameters.component';
+import { SubjectsComponent } from '../subjects/subjects.component';
+import { ClassroomSubjectsComponent } from '../subjects/components/classroom-subjects/classroom-subjects.component';
 
 
 const routes: Routes = [
@@ -31,6 +33,8 @@ const routes: Routes = [
       { path: 'class-levels', component: ClassLevelComponent },
       { path: 'registrations', component: RegistrationsComponent },
       { path: 'parameters', component: SchoolParametersComponent },
+      { path: 'subjects', component: SubjectsComponent },
+      { path: 'classroom-subjects', component: ClassroomSubjectsComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   }

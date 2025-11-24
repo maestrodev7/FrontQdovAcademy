@@ -1,0 +1,31 @@
+<div class="header-actions">
+  <button nz-button nzType="primary" (click)="openModal()">Créer une matière</button>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  nzTitle="Créer une matière"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+      <strong>Erreur :</strong> {{ formError }}
+    </div>
+    <app-add-subject
+      [form]="subjectForm"
+      (formChange)="onFormChange($event)"
+    ></app-add-subject>
+  </ng-container>
+</nz-modal>
+
+<div class="content-container">
+  <app-dynamic-table
+    [title]="'Liste des matières'"
+    [columns]="columns"
+    [data]="subjectsList"
+    [selectable]="true">
+  </app-dynamic-table>
+</div>
+

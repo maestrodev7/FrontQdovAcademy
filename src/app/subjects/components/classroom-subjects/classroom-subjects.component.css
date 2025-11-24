@@ -1,0 +1,85 @@
+.container {
+  padding: 16px;
+}
+
+.header-section {
+  margin-bottom: 24px;
+}
+
+.header-section h2 {
+  margin-bottom: 16px;
+}
+
+.classroom-selector {
+  margin-bottom: 16px;
+}
+
+.classroom-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.actions-section {
+  margin-top: 16px;
+}
+
+.content-section {
+  margin-top: 24px;
+}
+
+.subjects-list {
+  margin-top: 16px;
+}
+
+.subjects-list h3 {
+  margin-bottom: 16px;
+}
+
+.subject-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.subject-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subject-info strong {
+  font-size: 16px;
+}
+
+.coefficient {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.subject-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: #8c8c8c;
+}
+
+.error-message {
+  color: #ff4d4f;
+  margin-bottom: 16px;
+  padding: 8px;
+  background-color: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  white-space: pre-line;
+}
+

@@ -1,0 +1,10 @@
+.form-container {
+  padding: 16px 0;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+

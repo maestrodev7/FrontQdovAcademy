@@ -1,0 +1,25 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-container">
+  <div nz-row [nzGutter]="16">
+    <div nz-col nzSpan="12">
+      <label>Code <span style="color: red;">*</span></label>
+      <input nz-input formControlName="code" placeholder="Ex: MATH" [class.ant-input-status-error]="form.get('code')?.invalid && form.get('code')?.touched" />
+      <div *ngIf="form.get('code')?.invalid && form.get('code')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le code est requis
+      </div>
+    </div>
+
+    <div nz-col nzSpan="12">
+      <label>Nom <span style="color: red;">*</span></label>
+      <input nz-input formControlName="name" placeholder="Ex: Mathématiques" [class.ant-input-status-error]="form.get('name')?.invalid && form.get('name')?.touched" />
+      <div *ngIf="form.get('name')?.invalid && form.get('name')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+        Le nom est requis
+      </div>
+    </div>
+
+    <div nz-col nzSpan="24">
+      <label>Description</label>
+      <input nz-input formControlName="description" placeholder="Description de la matière" />
+    </div>
+  </div>
+</form>
+

@@ -66,7 +66,7 @@ isSuperAdmin(): boolean {
   return this.userRole === 'SUPER_ADMIN' || (typeof this.userRole === 'string' && this.userRole.includes('SUPER_ADMIN'));
 }
 
-
+   
   loadSchools() {
     this.schoolService.getSchools().subscribe({
       next: (res: ApiResponse<School[]>) => {

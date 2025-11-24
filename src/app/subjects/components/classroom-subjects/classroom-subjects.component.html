@@ -1,0 +1,120 @@
+<div class="container">
+  <div class="header-section">
+    <h2>Association Matières - Classes</h2>
+    
+    <div class="classroom-selector">
+      <label>Sélectionner une classe :</label>
+      <nz-select
+        [(ngModel)]="selectedClassroomId"
+        (ngModelChange)="onClassroomChange($event)"
+        nzPlaceHolder="Choisissez une classe"
+        style="width: 100%; margin-top: 8px;"
+      >
+        <nz-option
+          *ngFor="let classroom of classrooms"
+          [nzValue]="classroom.id"
+          [nzLabel]="classroom.label"
+        ></nz-option>
+      </nz-select>
+    </div>
+
+    <div *ngIf="selectedClassroomId" class="actions-section">
+      <button nz-button nzType="primary" (click)="openModal()">
+        Ajouter une matière
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="selectedClassroomId" class="content-section">
+    <div *ngIf="classroomSubjects.length === 0 && !loading" class="empty-state">
+      <p>Aucune matière associée à cette classe.</p>
+    </div>
+
+    <div *ngIf="classroomSubjects.length > 0" class="subjects-list">
+      <h3>Matières associées à la classe : {{ getSelectedClassroomName() }}</h3>
+      <div class="subject-item" *ngFor="let association of classroomSubjects">
+        <div class="subject-info">
+          <strong>{{ association.subjectCode }} - {{ association.subjectName }}</strong>
+          <span class="coefficient">Coefficient: {{ association.coefficient }}</span>
+        </div>
+        <div class="subject-actions">
+          <button
+            nz-button
+            nzType="default"
+            nzSize="small"
+            (click)="openEditModal(association)"
+          >
+            Modifier coefficient
+          </button>
+          <button
+            nz-button
+            nzType="default"
+            nzDanger
+            nzSize="small"
+            (click)="deleteAssociation(association)"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!selectedClassroomId" class="empty-state">
+    <p>Veuillez sélectionner une classe pour voir ses matières associées.</p>
+  </div>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="editingAssociation ? 'Modifier le coefficient' : 'Associer une matière à la classe'"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+  nzOkText="Enregistrer"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+      <strong>Erreur :</strong> {{ formError }}
+    </div>
+
+    <form [formGroup]="associationForm">
+      <div style="margin-bottom: 16px;">
+        <label>Matière <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="subjectId"
+          nzPlaceHolder="Sélectionner une matière"
+          style="width: 100%; margin-top: 8px;"
+          [nzDisabled]="!!editingAssociation"
+          [class.ant-select-status-error]="associationForm.get('subjectId')?.invalid && associationForm.get('subjectId')?.touched"
+        >
+          <nz-option
+            *ngFor="let subject of getAvailableSubjects()"
+            [nzValue]="subject.id"
+            [nzLabel]="subject.code + ' - ' + subject.name"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="associationForm.get('subjectId')?.invalid && associationForm.get('subjectId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          La matière est requise
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Coefficient <span style="color: red;">*</span></label>
+        <nz-input-number
+          formControlName="coefficient"
+          [nzMin]="0.1"
+          [nzStep]="0.5"
+          [nzPrecision]="1"
+          style="width: 100%; margin-top: 8px;"
+          [class.ant-input-number-status-error]="associationForm.get('coefficient')?.invalid && associationForm.get('coefficient')?.touched"
+        ></nz-input-number>
+        <div *ngIf="associationForm.get('coefficient')?.invalid && associationForm.get('coefficient')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          Le coefficient est requis (minimum 0.1)
+        </div>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
+

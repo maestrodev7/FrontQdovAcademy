@@ -16,6 +16,10 @@ export class ClassroomSubjectService {
     return this.http.post<ApiResponse<any>>(this.CLASSROOM_SUBJECT_API, payload);
   }
 
+  getAll(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(this.CLASSROOM_SUBJECT_API);
+  }
+
   getByClassroom(classRoomId: string): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.CLASSROOM_SUBJECT_API}/classroom/${classRoomId}`);
   }

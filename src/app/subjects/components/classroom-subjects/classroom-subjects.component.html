@@ -1,7 +1,7 @@
 <div class="container">
   <div class="header-section">
     <h2>Association Matières - Classes</h2>
-    
+
     <div class="classroom-selector">
       <label>Sélectionner une classe :</label>
       <nz-select
@@ -26,11 +26,16 @@
   </div>
 
   <div *ngIf="selectedClassroomId" class="content-section">
-    <div *ngIf="classroomSubjects.length === 0 && !loading" class="empty-state">
+    <div *ngIf="loading" style="text-align: center; padding: 20px;">
+      <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+      <p>Chargement des matières...</p>
+    </div>
+
+    <div *ngIf="!loading && classroomSubjects.length === 0" class="empty-state">
       <p>Aucune matière associée à cette classe.</p>
     </div>
 
-    <div *ngIf="classroomSubjects.length > 0" class="subjects-list">
+    <div *ngIf="!loading && classroomSubjects.length > 0" class="subjects-list">
       <h3>Matières associées à la classe : {{ getSelectedClassroomName() }}</h3>
       <div class="subject-item" *ngFor="let association of classroomSubjects">
         <div class="subject-info">

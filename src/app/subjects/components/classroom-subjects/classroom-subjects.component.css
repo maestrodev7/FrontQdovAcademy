@@ -1,9 +1,14 @@
 .container {
   padding: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 .header-section {
   margin-bottom: 24px;
+  width: 100%;
 }
 
 .header-section h2 {
@@ -12,6 +17,7 @@
 
 .classroom-selector {
   margin-bottom: 16px;
+  width: 100%;
 }
 
 .classroom-selector label {
@@ -26,10 +32,12 @@
 
 .content-section {
   margin-top: 24px;
+  width: 100%;
 }
 
 .subjects-list {
   margin-top: 16px;
+  width: 100%;
 }
 
 .subjects-list h3 {
@@ -45,6 +53,8 @@
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   background-color: #fafafa;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .subject-info {
@@ -71,6 +81,8 @@
   text-align: center;
   padding: 48px;
   color: #8c8c8c;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .error-message {

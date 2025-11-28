@@ -5,8 +5,8 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
+import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzMessageService } from 'ng-zorro-antd/message';
-import { DynamicTableComponent } from '../../../classroom/ui/dynamic-table/dynamic-table.component';
 import { ClassroomService } from '../../../classroom/services/classroom.service';
 import { SubjectService } from '../../services/subject.service';
 import { ClassroomSubjectService } from '../../services/classroom-subject.service';
@@ -23,7 +23,7 @@ import { FormsModule } from '@angular/forms';
     NzButtonModule,
     NzSelectModule,
     NzInputNumberModule,
-    DynamicTableComponent,
+    NzSpinModule,
   ],
   templateUrl: './classroom-subjects.component.html',
   styleUrls: ['./classroom-subjects.component.css']
@@ -112,22 +112,54 @@ export class ClassroomSubjectsComponent implements OnInit {
 
   loadClassroomSubjects(classroomId: string): void {
     this.loading = true;
+    // Essayer d'abord l'endpoint spécifique, puis utiliser l'endpoint de base comme fallback
     this.classroomSubjectService.getByClassroom(classroomId).subscribe({
       next: (res) => {
-        this.classroomSubjects = (res.data || []).map((cs: any) => ({
+        console.log('Réponse API classroom-subjects (endpoint spécifique):', res);
+        // L'API retourne déjà les données avec subjectId, subjectName, subjectCode, etc.
+        const data = res.data || [];
+        console.log('Données reçues:', data);
+        this.classroomSubjects = data.map((cs: any) => ({
           id: cs.id,
-          subjectId: cs.subject?.id || cs.subjectId,
-          subjectName: cs.subject?.name || '',
-          subjectCode: cs.subject?.code || '',
+          subjectId: cs.subjectId,
+          subjectName: cs.subjectName || '',
+          subjectCode: cs.subjectCode || '',
+          classRoomId: cs.classRoomId,
+          classRoomLabel: cs.classRoomLabel || '',
           coefficient: cs.coefficient || 1
         }));
+        console.log('Classroom subjects mappés:', this.classroomSubjects);
         this.loading = false;
       },
       error: (err) => {
-        console.error('Erreur lors du chargement des matières de la classe:', err);
-        this.message.error('Impossible de charger les matières de la classe');
-        this.loading = false;
-        this.classroomSubjects = [];
+        console.warn('Endpoint spécifique échoué, tentative avec endpoint de base:', err);
+        // Fallback: utiliser l'endpoint de base et filtrer côté client
+        this.classroomSubjectService.getAll().subscribe({
+          next: (res) => {
+            console.log('Réponse API classroom-subjects (endpoint de base):', res);
+            const allData = res.data || [];
+            // Filtrer par classroomId
+            const filteredData = allData.filter((cs: any) => cs.classRoomId === classroomId);
+            console.log('Données filtrées:', filteredData);
+            this.classroomSubjects = filteredData.map((cs: any) => ({
+              id: cs.id,
+              subjectId: cs.subjectId,
+              subjectName: cs.subjectName || '',
+              subjectCode: cs.subjectCode || '',
+              classRoomId: cs.classRoomId,
+              classRoomLabel: cs.classRoomLabel || '',
+              coefficient: cs.coefficient || 1
+            }));
+            console.log('Classroom subjects mappés (fallback):', this.classroomSubjects);
+            this.loading = false;
+          },
+          error: (fallbackErr) => {
+            console.error('Erreur lors du chargement des matières de la classe:', fallbackErr);
+            this.message.error('Impossible de charger les matières de la classe');
+            this.loading = false;
+            this.classroomSubjects = [];
+          }
+        });
       }
     });
   }
@@ -203,12 +235,17 @@ export class ClassroomSubjectsComponent implements OnInit {
       // Création
       this.classroomSubjectService.createAssociation(payload).subscribe({
         next: (res) => {
+          console.log('Réponse création association:', res);
+          // L'API peut retourner les données directement ou dans res.data
+          const createdData = res.data || res;
           const newAssociation = {
-            id: res.data?.id,
+            id: createdData?.id,
             subjectId: payload.subjectId,
-            subjectName: this.subjects.find(s => s.id === payload.subjectId)?.name || '',
-            subjectCode: this.subjects.find(s => s.id === payload.subjectId)?.code || '',
-            coefficient: payload.coefficient
+            subjectName: createdData?.subjectName || this.subjects.find(s => s.id === payload.subjectId)?.name || '',
+            subjectCode: createdData?.subjectCode || this.subjects.find(s => s.id === payload.subjectId)?.code || '',
+            classRoomId: payload.classRoomId,
+            classRoomLabel: createdData?.classRoomLabel || this.getSelectedClassroomName(),
+            coefficient: createdData?.coefficient || payload.coefficient
           };
 
           this.classroomSubjects = [newAssociation, ...this.classroomSubjects];
@@ -244,9 +281,9 @@ export class ClassroomSubjectsComponent implements OnInit {
   private handleError(err: any): void {
     console.error('❌ Erreur :', err);
     this.isSubmitting = false;
-    
+
     const errorMessage = this.extractErrorMessage(err);
-    
+
     this.formError = errorMessage;
     this.message.error(errorMessage);
   }

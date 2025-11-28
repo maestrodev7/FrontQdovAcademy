@@ -1,14 +1,23 @@
 :host {
   display: block;
   height: 100vh; /* hauteur full page */
+  width: 100%;
 }
 
 nz-layout {
-
+  width: 100%;
+  display: flex;
 }
 
 nz-sider {
   min-height: 100vh; /* hauteur full */
+  flex: 0 0 auto;
+}
+
+::ng-deep router-outlet ~ * {
+  flex: 1;
+  width: 100%;
+  display: block;
 }
 nz-layout > nz-layout {
   display: flex;

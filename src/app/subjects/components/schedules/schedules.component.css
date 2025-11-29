@@ -22,12 +22,19 @@
   margin-bottom: 16px;
 }
 
-.classroom-selector {
+.filters-section {
+  display: flex;
+  gap: 16px;
   margin-bottom: 16px;
-  width: 100%;
+  flex-wrap: wrap;
 }
 
-.classroom-selector label {
+.filter-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-item label {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
@@ -42,46 +49,9 @@
   width: 100%;
 }
 
-.subjects-list {
+.schedules-table {
   margin-top: 16px;
   width: 100%;
-}
-
-.subjects-list h3 {
-  margin-bottom: 16px;
-}
-
-.subject-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  background-color: #fafafa;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.subject-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.subject-info strong {
-  font-size: 16px;
-}
-
-.coefficient {
-  color: #8c8c8c;
-  font-size: 14px;
-}
-
-.subject-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .empty-state {
@@ -100,5 +70,14 @@
   border: 1px solid #ffccc7;
   border-radius: 4px;
   white-space: pre-line;
+}
+
+::ng-deep .ant-table {
+  font-size: 14px;
+}
+
+::ng-deep .ant-table-thead > tr > th {
+  background-color: #fafafa;
+  font-weight: 600;
 }
 

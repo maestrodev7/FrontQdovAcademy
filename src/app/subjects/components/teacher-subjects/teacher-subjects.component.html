@@ -1,0 +1,141 @@
+<div class="container">
+  <div class="header-section">
+    <h2>Association Enseignants - Matières</h2>
+
+    <div class="actions-section">
+      <button nz-button nzType="primary" (click)="openModal()">
+        Associer un enseignant à une matière
+      </button>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div *ngIf="loading" style="text-align: center; padding: 20px;">
+      <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+      <p>Chargement des associations...</p>
+    </div>
+
+    <div *ngIf="!loading && teacherSubjects.length === 0" class="empty-state">
+      <p>Aucune association enseignant-matière.</p>
+    </div>
+
+    <div *ngIf="!loading && teacherSubjects.length > 0" class="associations-list">
+      <h3>Associations Enseignant-Matière</h3>
+      <div class="association-item" *ngFor="let association of teacherSubjects">
+        <div class="association-info">
+          <div class="main-info">
+            <strong>{{ association.subjectCode }} - {{ association.subjectName }}</strong>
+            <span class="teacher-name">{{ association.teacherName || 'Enseignant non assigné' }}</span>
+          </div>
+          <div class="details">
+            <span *ngIf="association.specialization" class="specialization">
+              Spécialisation: {{ association.specialization }}
+            </span>
+            <span *ngIf="association.experienceYears > 0" class="experience">
+              Expérience: {{ association.experienceYears }} an(s)
+            </span>
+          </div>
+        </div>
+        <div class="association-actions">
+          <button
+            nz-button
+            nzType="default"
+            nzSize="small"
+            (click)="openEditModal(association)"
+          >
+            Modifier
+          </button>
+          <button
+            nz-button
+            nzType="default"
+            nzDanger
+            nzSize="small"
+            (click)="deleteAssociation(association)"
+          >
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="editingAssociation ? 'Modifier l\'association' : 'Associer un enseignant à une matière'"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+  nzOkText="Enregistrer"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+      <strong>Erreur :</strong> {{ formError }}
+    </div>
+
+    <form [formGroup]="associationForm">
+      <div style="margin-bottom: 16px;">
+        <label>Enseignant <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="userSchoolId"
+          nzPlaceHolder="Sélectionner un enseignant"
+          style="width: 100%; margin-top: 8px;"
+          [nzDisabled]="!!editingAssociation"
+          [class.ant-select-status-error]="associationForm.get('userSchoolId')?.invalid && associationForm.get('userSchoolId')?.touched"
+        >
+          <nz-option
+            *ngFor="let teacher of teachers"
+            [nzValue]="teacher.userSchoolId"
+            [nzLabel]="teacher.fullName + ' (' + teacher.email + ')'"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="associationForm.get('userSchoolId')?.invalid && associationForm.get('userSchoolId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          L'enseignant est requis
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Matière <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="subjectId"
+          nzPlaceHolder="Sélectionner une matière"
+          style="width: 100%; margin-top: 8px;"
+          [nzDisabled]="!!editingAssociation"
+          [class.ant-select-status-error]="associationForm.get('subjectId')?.invalid && associationForm.get('subjectId')?.touched"
+        >
+          <nz-option
+            *ngFor="let subject of getAvailableSubjects()"
+            [nzValue]="subject.id"
+            [nzLabel]="subject.code + ' - ' + subject.name"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="associationForm.get('subjectId')?.invalid && associationForm.get('subjectId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          La matière est requise
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Spécialisation</label>
+        <input
+          nz-input
+          formControlName="specialization"
+          placeholder="Ex: Arithmétique, Algèbre, etc."
+          style="width: 100%; margin-top: 8px;"
+        />
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Années d'expérience</label>
+        <nz-input-number
+          formControlName="experienceYears"
+          [nzMin]="0"
+          [nzStep]="1"
+          [nzPrecision]="0"
+          style="width: 100%; margin-top: 8px;"
+        ></nz-input-number>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
+

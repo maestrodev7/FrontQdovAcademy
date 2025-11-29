@@ -1,0 +1,265 @@
+<div class="container">
+  <div class="header-section">
+    <h2>Gestion de l'Emploi du Temps</h2>
+    
+    <div class="filters-section">
+      <div class="filter-item">
+        <label>Sélectionner une classe :</label>
+        <nz-select
+          [(ngModel)]="selectedClassroomId"
+          (ngModelChange)="onClassroomChange($event)"
+          nzPlaceHolder="Choisissez une classe"
+          style="width: 100%; margin-top: 8px;"
+        >
+          <nz-option
+            *ngFor="let classroom of classrooms"
+            [nzValue]="classroom.id"
+            [nzLabel]="classroom.label"
+          ></nz-option>
+        </nz-select>
+      </div>
+
+      <div class="filter-item" *ngIf="selectedClassroomId">
+        <label>Filtrer par jour :</label>
+        <nz-select
+          [(ngModel)]="selectedDay"
+          nzPlaceHolder="Tous les jours"
+          style="width: 100%; margin-top: 8px;"
+          [nzAllowClear]="true"
+        >
+          <nz-option
+            *ngFor="let day of daysOfWeek"
+            [nzValue]="day.value"
+            [nzLabel]="day.label"
+          ></nz-option>
+        </nz-select>
+      </div>
+    </div>
+
+    <div *ngIf="selectedClassroomId" class="actions-section">
+      <button nz-button nzType="primary" (click)="openModal()">
+        <span nz-icon nzType="plus"></span>
+        Ajouter un créneau
+      </button>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div *ngIf="loading" style="text-align: center; padding: 20px;">
+      <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+      <p>Chargement de l'emploi du temps...</p>
+    </div>
+
+    <div *ngIf="!selectedClassroomId && !loading" class="empty-state">
+      <p>Veuillez sélectionner une classe pour voir son emploi du temps.</p>
+    </div>
+
+    <div *ngIf="selectedClassroomId && !loading && getFilteredSchedules().length === 0" class="empty-state">
+      <p>Aucun créneau programmé pour cette classe.</p>
+    </div>
+
+    <div *ngIf="selectedClassroomId && !loading && getFilteredSchedules().length > 0" class="schedules-table">
+      <nz-table
+        [nzData]="getFilteredSchedules()"
+        [nzShowPagination]="false"
+        [nzPageSize]="100"
+        nzSize="middle"
+      >
+        <thead>
+          <tr>
+            <th>Jour</th>
+            <th>Horaire</th>
+            <th>Matière</th>
+            <th>Enseignant</th>
+            <th>Salle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let schedule of getFilteredSchedules()">
+            <td>
+              <nz-tag [nzColor]="'blue'">{{ getDayLabel(schedule.dayOfWeek) }}</nz-tag>
+            </td>
+            <td>
+              <strong>{{ schedule.startTime.substring(0, 5) }} - {{ schedule.endTime.substring(0, 5) }}</strong>
+              <br>
+              <span style="color: #8c8c8c; font-size: 12px;">{{ schedule.duration }}</span>
+            </td>
+            <td>
+              <strong>{{ schedule.subjectCode }}</strong>
+              <br>
+              <span style="color: #8c8c8c; font-size: 12px;">{{ schedule.subjectName }}</span>
+            </td>
+            <td>{{ schedule.teacherName }}</td>
+            <td>{{ schedule.room || '—' }}</td>
+            <td>
+              <button
+                nz-button
+                nzType="default"
+                nzSize="small"
+                (click)="openEditModal(schedule)"
+                style="margin-right: 8px;"
+              >
+                Modifier
+              </button>
+              <button
+                nz-button
+                nzType="default"
+                nzDanger
+                nzSize="small"
+                (click)="deleteSchedule(schedule)"
+              >
+                Supprimer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </div>
+  </div>
+</div>
+
+<nz-modal
+  [(nzVisible)]="isModalVisible"
+  [nzTitle]="editingSchedule ? 'Modifier le créneau' : 'Ajouter un créneau'"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="submitForm()"
+  [nzOkLoading]="isSubmitting"
+  [nzWidth]="700"
+  nzOkText="Enregistrer"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <div *ngIf="formError" class="error-message" style="color: #ff4d4f; margin-bottom: 16px; padding: 8px; background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; white-space: pre-line;">
+      <strong>Erreur :</strong> {{ formError }}
+    </div>
+
+    <form [formGroup]="scheduleForm">
+      <div style="margin-bottom: 16px;">
+        <label>Classe <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="classRoomId"
+          nzPlaceHolder="Sélectionner une classe"
+          style="width: 100%; margin-top: 8px;"
+          [nzDisabled]="!!editingSchedule || !!selectedClassroomId"
+          [class.ant-select-status-error]="scheduleForm.get('classRoomId')?.invalid && scheduleForm.get('classRoomId')?.touched"
+        >
+          <nz-option
+            *ngFor="let classroom of classrooms"
+            [nzValue]="classroom.id"
+            [nzLabel]="classroom.label"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="scheduleForm.get('classRoomId')?.invalid && scheduleForm.get('classRoomId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          La classe est requise
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;" *ngIf="!editingSchedule">
+        <label>Matière de la classe</label>
+        <nz-select
+          formControlName="classRoomSubjectId"
+          nzPlaceHolder="Sélectionner une matière"
+          style="width: 100%; margin-top: 8px;"
+          (ngModelChange)="onClassroomSubjectChange()"
+        >
+          <nz-option
+            *ngFor="let cs of classroomSubjects"
+            [nzValue]="cs.id"
+            [nzLabel]="cs.subjectCode + ' - ' + cs.subjectName"
+          ></nz-option>
+        </nz-select>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Enseignant-Matière <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="teacherSubjectId"
+          nzPlaceHolder="Sélectionner un enseignant"
+          style="width: 100%; margin-top: 8px;"
+          [nzDisabled]="!!editingSchedule"
+          [class.ant-select-status-error]="scheduleForm.get('teacherSubjectId')?.invalid && scheduleForm.get('teacherSubjectId')?.touched"
+        >
+          <nz-option
+            *ngFor="let ts of getAvailableTeacherSubjects()"
+            [nzValue]="ts.id"
+            [nzLabel]="ts.subjectCode + ' - ' + ts.teacherName + (ts.specialization ? ' (' + ts.specialization + ')' : '')"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="scheduleForm.get('teacherSubjectId')?.invalid && scheduleForm.get('teacherSubjectId')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          L'enseignant est requis
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Jour de la semaine <span style="color: red;">*</span></label>
+        <nz-select
+          formControlName="dayOfWeek"
+          nzPlaceHolder="Sélectionner un jour"
+          style="width: 100%; margin-top: 8px;"
+          [class.ant-select-status-error]="scheduleForm.get('dayOfWeek')?.invalid && scheduleForm.get('dayOfWeek')?.touched"
+        >
+          <nz-option
+            *ngFor="let day of daysOfWeek"
+            [nzValue]="day.value"
+            [nzLabel]="day.label"
+          ></nz-option>
+        </nz-select>
+        <div *ngIf="scheduleForm.get('dayOfWeek')?.invalid && scheduleForm.get('dayOfWeek')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+          Le jour est requis
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+        <div style="flex: 1;">
+          <label>Heure de début <span style="color: red;">*</span></label>
+          <input
+            nz-input
+            type="time"
+            formControlName="startTime"
+            style="width: 100%; margin-top: 8px;"
+            [class.ant-input-status-error]="scheduleForm.get('startTime')?.invalid && scheduleForm.get('startTime')?.touched"
+          />
+          <div *ngIf="scheduleForm.get('startTime')?.invalid && scheduleForm.get('startTime')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            L'heure de début est requise
+          </div>
+        </div>
+        <div style="flex: 1;">
+          <label>Heure de fin <span style="color: red;">*</span></label>
+          <input
+            nz-input
+            type="time"
+            formControlName="endTime"
+            style="width: 100%; margin-top: 8px;"
+            [class.ant-input-status-error]="scheduleForm.get('endTime')?.invalid && scheduleForm.get('endTime')?.touched"
+          />
+          <div *ngIf="scheduleForm.get('endTime')?.invalid && scheduleForm.get('endTime')?.touched" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            L'heure de fin est requise
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Salle</label>
+        <input
+          nz-input
+          formControlName="room"
+          placeholder="Ex: Salle A-101"
+          style="width: 100%; margin-top: 8px;"
+        />
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label>Notes</label>
+        <textarea
+          nz-input
+          formControlName="notes"
+          placeholder="Notes additionnelles..."
+          rows="3"
+          style="width: 100%; margin-top: 8px;"
+        ></textarea>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
+

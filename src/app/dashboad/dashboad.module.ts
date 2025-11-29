@@ -15,6 +15,8 @@ import { RegistrationsComponent } from '../registrations/registrations.component
 import { SchoolParametersComponent } from '../school/components/school-parameters/school-parameters.component';
 import { SubjectsComponent } from '../subjects/subjects.component';
 import { ClassroomSubjectsComponent } from '../subjects/components/classroom-subjects/classroom-subjects.component';
+import { TeacherSubjectsComponent } from '../subjects/components/teacher-subjects/teacher-subjects.component';
+import { SchedulesComponent } from '../subjects/components/schedules/schedules.component';
 
 
 const routes: Routes = [
@@ -35,6 +37,8 @@ const routes: Routes = [
       { path: 'parameters', component: SchoolParametersComponent },
       { path: 'subjects', component: SubjectsComponent },
       { path: 'classroom-subjects', component: ClassroomSubjectsComponent },
+      { path: 'teacher-subjects', component: TeacherSubjectsComponent },
+      { path: 'schedules', component: SchedulesComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   }

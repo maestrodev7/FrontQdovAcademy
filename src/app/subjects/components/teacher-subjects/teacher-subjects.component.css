@@ -22,17 +22,6 @@
   margin-bottom: 16px;
 }
 
-.classroom-selector {
-  margin-bottom: 16px;
-  width: 100%;
-}
-
-.classroom-selector label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
 .actions-section {
   margin-top: 16px;
 }
@@ -42,21 +31,21 @@
   width: 100%;
 }
 
-.subjects-list {
+.associations-list {
   margin-top: 16px;
   width: 100%;
 }
 
-.subjects-list h3 {
+.associations-list h3 {
   margin-bottom: 16px;
 }
 
-.subject-item {
+.association-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   background-color: #fafafa;
@@ -64,22 +53,46 @@
   box-sizing: border-box;
 }
 
-.subject-info {
+.association-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.main-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.subject-info strong {
+.main-info strong {
   font-size: 16px;
+  color: #1890ff;
 }
 
-.coefficient {
-  color: #8c8c8c;
+.teacher-name {
   font-size: 14px;
+  color: #595959;
+  font-weight: 500;
 }
 
-.subject-actions {
+.details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.specialization,
+.experience {
+  font-size: 13px;
+  color: #8c8c8c;
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.association-actions {
   display: flex;
   gap: 8px;
 }

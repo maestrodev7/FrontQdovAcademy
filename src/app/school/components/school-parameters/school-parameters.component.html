@@ -1,50 +1,245 @@
 <nz-spin [nzSpinning]="loading || academicYearsLoading">
   <div class="parameters-container" *ngIf="school; else emptyState">
-    <nz-card nzTitle="Année académique en cours" nzBordered="false">
+    <nz-card nzBordered="false">
       <div class="school-info">
         <p><strong>École :</strong> {{ school.name }}</p>
         <p><strong>Adresse :</strong> {{ school.address }}</p>
         <p><strong>Téléphone :</strong> {{ school.phoneNumber }}</p>
       </div>
 
-      <div class="year-actions">
-        <button nz-button nzType="default" (click)="openYearModal()">
-          Créer une année académique
-        </button>
-      </div>
+      <nz-tabset [(nzSelectedIndex)]="activeTabIndex" nzType="card">
+        <!-- Configuration Tab -->
+        <nz-tab nzTitle="Configuration">
+          <nz-card nzTitle="Configuration des Trimestres et Séquences" nzBordered="false" style="margin-top: 16px;">
+            <form nz-form [formGroup]="configForm">
+              <nz-form-item>
+                <nz-form-label [nzSpan]="8" nzRequired>Nombre de trimestres</nz-form-label>
+                <nz-form-control [nzSpan]="16" nzErrorTip="Le nombre de trimestres est requis (1-12)">
+                  <nz-input-number
+                    formControlName="numberOfTerms"
+                    [nzMin]="1"
+                    [nzMax]="12"
+                    [nzStep]="1"
+                    style="width: 100%;"
+                  ></nz-input-number>
+                </nz-form-control>
+              </nz-form-item>
 
-      <div class="academic-year-section">
-        <label for="academicYearSelect">Sélectionner l'année académique</label>
-        <nz-select
-          id="academicYearSelect"
-          style="width: 100%; margin: 8px 0 16px;"
-          [(ngModel)]="selectedAcademicYearId"
-          nzPlaceHolder="Choisissez une année"
-        >
-          <nz-option
-            *ngFor="let year of academicYears"
-            [nzValue]="year.id"
-            [nzLabel]="year.startDate + ' - ' + year.endDate + (year.active ? ' (actuelle)' : '')"
-          ></nz-option>
-        </nz-select>
-      </div>
+              <nz-form-item>
+                <nz-form-label [nzSpan]="8" nzRequired>Nombre de séquences par trimestre</nz-form-label>
+                <nz-form-control [nzSpan]="16" nzErrorTip="Le nombre de séquences est requis (1-12)">
+                  <nz-input-number
+                    formControlName="numberOfSequencesPerTerm"
+                    [nzMin]="1"
+                    [nzMax]="12"
+                    [nzStep]="1"
+                    style="width: 100%;"
+                  ></nz-input-number>
+                </nz-form-control>
+              </nz-form-item>
 
-      <div
-        *ngIf="formError"
-        class="error-message"
-      >
-        <strong>Erreur :</strong> {{ formError }}
-      </div>
+              <nz-form-item>
+                <nz-form-control [nzSpan]="24" [nzOffset]="8">
+                  <button nz-button nzType="primary" (click)="saveConfig()">
+                    Enregistrer la configuration
+                  </button>
+                </nz-form-control>
+              </nz-form-item>
+            </form>
+          </nz-card>
+        </nz-tab>
 
-      <button
-        nz-button
-        nzType="primary"
-        [disabled]="!selectedAcademicYearId"
-        [nzLoading]="saving"
-        (click)="saveCurrentAcademicYear()"
-      >
-        Enregistrer
-      </button>
+        <!-- Academic Year Tab -->
+        <nz-tab nzTitle="Année académique">
+          <nz-card nzTitle="Année académique en cours" nzBordered="false" style="margin-top: 16px;">
+            <div class="year-actions">
+              <button nz-button nzType="default" (click)="openYearModal()">
+                Créer une année académique
+              </button>
+            </div>
+
+            <div class="academic-year-section">
+              <label for="academicYearSelect">Sélectionner l'année académique</label>
+              <nz-select
+                id="academicYearSelect"
+                style="width: 100%; margin: 8px 0 16px;"
+                [(ngModel)]="selectedAcademicYearId"
+                (ngModelChange)="onAcademicYearChange()"
+                nzPlaceHolder="Choisissez une année"
+              >
+                <nz-option
+                  *ngFor="let year of academicYears"
+                  [nzValue]="year.id"
+                  [nzLabel]="year.startDate + ' - ' + year.endDate + (year.active ? ' (actuelle)' : '')"
+                ></nz-option>
+              </nz-select>
+            </div>
+
+            <div *ngIf="formError" class="error-message">
+              <strong>Erreur :</strong> {{ formError }}
+            </div>
+
+            <button
+              nz-button
+              nzType="primary"
+              [disabled]="!selectedAcademicYearId"
+              [nzLoading]="saving"
+              (click)="saveCurrentAcademicYear()"
+            >
+              Enregistrer
+            </button>
+          </nz-card>
+        </nz-tab>
+
+        <!-- Terms Tab -->
+        <nz-tab nzTitle="Trimestres">
+          <nz-card nzTitle="Gestion des Trimestres" nzBordered="false" style="margin-top: 16px;">
+            <div style="margin-bottom: 16px;">
+              <button
+                nz-button
+                nzType="primary"
+                [disabled]="!selectedAcademicYearId"
+                (click)="openTermModal()"
+              >
+                <span nz-icon nzType="plus"></span>
+                Créer un trimestre
+              </button>
+            </div>
+
+            <nz-spin [nzSpinning]="termsLoading">
+              <nz-table
+                [nzData]="terms"
+                [nzShowPagination]="false"
+                [nzPageSize]="20"
+                *ngIf="selectedAcademicYearId"
+              >
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Numéro</th>
+                    <th>Date de début</th>
+                    <th>Date de fin</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let term of terms">
+                    <td>{{ term.name }}</td>
+                    <td>{{ term.number }}</td>
+                    <td>{{ term.startDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ term.endDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>
+                      <button nz-button nzType="link" nzSize="small" (click)="openTermModal(term)">
+                        <span nz-icon nzType="edit"></span>
+                        Modifier
+                      </button>
+                      <nz-popconfirm
+                        nzTitle="Êtes-vous sûr de vouloir supprimer ce trimestre ?"
+                        (nzOnConfirm)="deleteTerm(term)"
+                      >
+                        <button nz-button nzType="link" nzDanger nzSize="small" nz-popconfirm>
+                          <span nz-icon nzType="delete"></span>
+                          Supprimer
+                        </button>
+                      </nz-popconfirm>
+                    </td>
+                  </tr>
+                  <tr *ngIf="terms.length === 0 && !termsLoading">
+                    <td colspan="5" style="text-align: center; padding: 20px;">
+                      Aucun trimestre trouvé. Créez-en un pour commencer.
+                    </td>
+                  </tr>
+                </tbody>
+              </nz-table>
+              <div *ngIf="!selectedAcademicYearId" style="text-align: center; padding: 20px;">
+                Veuillez sélectionner une année académique d'abord.
+              </div>
+            </nz-spin>
+          </nz-card>
+        </nz-tab>
+
+        <!-- Sequences Tab -->
+        <nz-tab nzTitle="Séquences">
+          <nz-card nzTitle="Gestion des Séquences" nzBordered="false" style="margin-top: 16px;">
+            <div style="margin-bottom: 16px;">
+              <nz-select
+                style="width: 300px; margin-right: 16px;"
+                [(ngModel)]="selectedTermForSequence"
+                [ngModelOptions]="{standalone: true}"
+                nzPlaceHolder="Sélectionner un trimestre"
+                (ngModelChange)="loadSequences($event)"
+              >
+                <nz-option
+                  *ngFor="let term of terms"
+                  [nzValue]="term"
+                  [nzLabel]="term.name"
+                ></nz-option>
+              </nz-select>
+              <button
+                nz-button
+                nzType="primary"
+                [disabled]="!selectedTermForSequence"
+                (click)="openSequenceModal()"
+              >
+                <span nz-icon nzType="plus"></span>
+                Créer une séquence
+              </button>
+            </div>
+
+            <nz-spin [nzSpinning]="sequencesLoading">
+              <nz-table
+                [nzData]="sequences"
+                [nzShowPagination]="false"
+                [nzPageSize]="20"
+                *ngIf="selectedTermForSequence"
+              >
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Numéro</th>
+                    <th>Trimestre</th>
+                    <th>Date de début</th>
+                    <th>Date de fin</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let sequence of sequences">
+                    <td>{{ sequence.name }}</td>
+                    <td>{{ sequence.number }}</td>
+                    <td>{{ selectedTermForSequence!.name }}</td>
+                    <td>{{ sequence.startDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>{{ sequence.endDate | date: 'dd/MM/yyyy' }}</td>
+                    <td>
+                      <button nz-button nzType="link" nzSize="small" (click)="openSequenceModal(sequence)">
+                        <span nz-icon nzType="edit"></span>
+                        Modifier
+                      </button>
+                      <nz-popconfirm
+                        nzTitle="Êtes-vous sûr de vouloir supprimer cette séquence ?"
+                        (nzOnConfirm)="deleteSequence(sequence)"
+                      >
+                        <button nz-button nzType="link" nzDanger nzSize="small" nz-popconfirm>
+                          <span nz-icon nzType="delete"></span>
+                          Supprimer
+                        </button>
+                      </nz-popconfirm>
+                    </td>
+                  </tr>
+                  <tr *ngIf="sequences.length === 0 && !sequencesLoading && selectedTermForSequence">
+                    <td colspan="6" style="text-align: center; padding: 20px;">
+                      Aucune séquence trouvée. Créez-en une pour commencer.
+                    </td>
+                  </tr>
+                </tbody>
+              </nz-table>
+              <div *ngIf="!selectedTermForSequence" style="text-align: center; padding: 20px;">
+                Veuillez sélectionner un trimestre d'abord.
+              </div>
+            </nz-spin>
+          </nz-card>
+        </nz-tab>
+      </nz-tabset>
     </nz-card>
   </div>
 </nz-spin>
@@ -57,6 +252,7 @@
   </nz-card>
 </ng-template>
 
+<!-- Academic Year Modal -->
 <nz-modal
   [(nzVisible)]="isYearModalVisible"
   nzTitle="Créer une année académique"
@@ -78,6 +274,115 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6" nzRequired>Fin</nz-form-label>
         <nz-form-control [nzSpan]="18" nzErrorTip="Date de fin requise">
+          <input nz-input type="date" formControlName="endDate" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<!-- Term Modal -->
+<nz-modal
+  [(nzVisible)]="isTermModalVisible"
+  [nzTitle]="editingTerm ? 'Modifier le trimestre' : 'Créer un trimestre'"
+  (nzOnCancel)="handleTermModalCancel()"
+  (nzOnOk)="submitTermForm()"
+  [nzOkLoading]="termModalLoading"
+  [nzOkText]="editingTerm ? 'Modifier' : 'Créer'"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="termForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Nom</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le nom est requis">
+          <input nz-input formControlName="name" placeholder="Ex: Trimestre 1" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Numéro</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le numéro est requis (minimum 1)">
+          <nz-input-number
+            formControlName="number"
+            [nzMin]="1"
+            [nzStep]="1"
+            style="width: 100%;"
+          ></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de début</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date de début est requise">
+          <input nz-input type="date" formControlName="startDate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de fin</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date de fin est requise">
+          <input nz-input type="date" formControlName="endDate" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<!-- Sequence Modal -->
+<nz-modal
+  [(nzVisible)]="isSequenceModalVisible"
+  [nzTitle]="editingSequence ? 'Modifier la séquence' : 'Créer une séquence'"
+  (nzOnCancel)="handleSequenceModalCancel()"
+  (nzOnOk)="submitSequenceForm()"
+  [nzOkLoading]="sequenceModalLoading"
+  [nzOkText]="editingSequence ? 'Modifier' : 'Créer'"
+  nzCancelText="Annuler"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="sequenceForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Nom</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le nom est requis">
+          <input nz-input formControlName="name" placeholder="Ex: Séquence 1" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Numéro</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le numéro est requis (minimum 1)">
+          <nz-input-number
+            formControlName="number"
+            [nzMin]="1"
+            [nzStep]="1"
+            style="width: 100%;"
+          ></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Trimestre</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Le trimestre est requis">
+          <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
+            <nz-option
+              *ngFor="let term of terms"
+              [nzValue]="term.id"
+              [nzLabel]="term.name"
+            ></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de début</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date de début est requise">
+          <input nz-input type="date" formControlName="startDate" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de fin</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="La date de fin est requise">
           <input nz-input type="date" formControlName="endDate" />
         </nz-form-control>
       </nz-form-item>

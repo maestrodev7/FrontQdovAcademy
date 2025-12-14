@@ -37,13 +37,22 @@ export class DashboadComponent implements OnInit {
     const user = this.authService.getUser();
 
     if (!user) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/auth/login']);
       return;
     }
 
-    this.userRole = user.roles;
+    // Gérer différents formats de rôles
+    if (Array.isArray(user.roles)) {
+      this.userRole = user.roles[0] || user.roles.join(',');
+    } else if (typeof user.roles === 'string') {
+      this.userRole = user.roles;
+    } else if (user.role) {
+      this.userRole = user.role;
+    } else {
+      this.userRole = '';
+    }
+    
     console.log('User Role:', this.userRole);
-
   }
 
 
@@ -56,5 +65,9 @@ export class DashboadComponent implements OnInit {
       this.userRole.includes('ADMIN') ||
       this.userRole .includes('PROMOTEUR')
     );
+  }
+
+  isTeacher(): boolean {
+    return this.userRole.includes('ENSEIGNANT') || this.userRole.includes('TEACHER');
   }
 }

@@ -10,6 +10,7 @@ import { SeriesService } from '../services/series.service';
 import { ClassLevelService } from '../services/class-level.service';
 import { SchoolService } from '../../school/services/school.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { AuthService } from '../../core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -44,6 +45,7 @@ export class ClassroomComponent implements OnInit {
   series: any[] = [];
   levels: any[] = [];
   schools: any[] = [];
+  isTeacher = false;
 
   constructor(
     private fb: FormBuilder,
@@ -51,12 +53,23 @@ export class ClassroomComponent implements OnInit {
     private seriesService: SeriesService,
     private classLevelService: ClassLevelService,
     private schoolService: SchoolService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
+    this.checkUserRole();
     this.loadReferenceData();
+  }
+
+  private checkUserRole(): void {
+    const user = this.authService.getUser();
+    if (user) {
+      const role = Array.isArray(user.roles) ? user.roles[0] : user.role || user.roles;
+      this.isTeacher = (typeof role === 'string' && (role.includes('ENSEIGNANT') || role.includes('TEACHER'))) ||
+                       (typeof user.roles === 'string' && (user.roles.includes('ENSEIGNANT') || user.roles.includes('TEACHER')));
+    }
   }
 
 private initForm(): void {

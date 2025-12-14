@@ -7,6 +7,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-subjects',
@@ -34,16 +35,28 @@ export class SubjectsComponent implements OnInit {
     { key: 'name', label: 'Nom' },
     { key: 'description', label: 'Description' },
   ];
+  isTeacher = false;
 
   constructor(
     private fb: FormBuilder,
     private subjectService: SubjectService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
+    this.checkUserRole();
     this.loadSubjects();
+  }
+
+  private checkUserRole(): void {
+    const user = this.authService.getUser();
+    if (user) {
+      const role = Array.isArray(user.roles) ? user.roles[0] : user.role || user.roles;
+      this.isTeacher = (typeof role === 'string' && (role.includes('ENSEIGNANT') || role.includes('TEACHER'))) ||
+                       (typeof user.roles === 'string' && (user.roles.includes('ENSEIGNANT') || user.roles.includes('TEACHER')));
+    }
   }
 
   private initForm(): void {

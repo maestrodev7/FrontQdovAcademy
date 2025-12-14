@@ -1,4 +1,4 @@
-<div class="header-actions">
+<div class="header-actions" *ngIf="!isTeacher">
   <button nz-button nzType="primary" (click)="openModal()">Créer une matière</button>
 </div>
 

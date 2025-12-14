@@ -37,7 +37,7 @@
     </div>
 
     <div *ngIf="selectedClassroomId" class="actions-section">
-      <button nz-button nzType="primary" (click)="openModal()">
+      <button nz-button nzType="primary" (click)="openModal()" *ngIf="!isTeacher">
         <span nz-icon nzType="plus"></span>
         Ajouter un créneau
       </button>
@@ -72,7 +72,7 @@
             <th>Matière</th>
             <th>Enseignant</th>
             <th>Salle</th>
-            <th>Actions</th>
+            <th *ngIf="!isTeacher">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -92,7 +92,7 @@
             </td>
             <td>{{ schedule.teacherName }}</td>
             <td>{{ schedule.room || '—' }}</td>
-            <td>
+            <td *ngIf="!isTeacher">
               <button
                 nz-button
                 nzType="default"

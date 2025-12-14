@@ -70,10 +70,10 @@ submitForm(): void {
         return;
       }
 
-      const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
+      const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role || user?.roles;
+      localStorage.setItem('user', JSON.stringify(user));
 
       if (role === 'SUPER_ADMIN') {
-        localStorage.setItem('user', JSON.stringify(user));
         this.router.navigate(['/school/list']);
 
       } else if (role === 'ADMIN' || role === 'PROMOTEUR') {
@@ -86,6 +86,34 @@ submitForm(): void {
           error: (err) => {
             console.error('Erreur récupération écoles utilisateur :', err);
             this.router.navigate(['/school/add']);
+          }
+        });
+      } else if (role === 'ENSEIGNANT' || role === 'TEACHER' || (typeof role === 'string' && (role.includes('ENSEIGNANT') || role.includes('TEACHER')))) {
+        // Pour les enseignants, récupérer leur école et la sélectionner automatiquement
+        this.loading = true;
+        this.schoolService.getSchoolsByUserId(user.id).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            const userSchools = res?.data || [];
+            if (userSchools.length > 0) {
+              // Prendre la première école associée à l'enseignant
+              const school = userSchools[0].school || userSchools[0];
+              if (school && school.id) {
+                localStorage.setItem('schoolId', school.id);
+                const schoolsArray = userSchools.map((us: any) => us.school || us);
+                localStorage.setItem('userSchools', JSON.stringify(schoolsArray));
+                this.router.navigate(['/dashboard']);
+              } else {
+                this.errorMessage = 'Aucune école associée à votre compte';
+              }
+            } else {
+              this.errorMessage = 'Aucune école associée à votre compte';
+            }
+          },
+          error: (err) => {
+            this.loading = false;
+            console.error('Erreur récupération école enseignant :', err);
+            this.errorMessage = 'Impossible de récupérer votre école. Veuillez contacter l\'administrateur.';
           }
         });
       } else {

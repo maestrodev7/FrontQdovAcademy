@@ -16,6 +16,7 @@ import { TeacherSubjectService } from '../../services/teacher-subject.service';
 import { ClassroomService } from '../../../classroom/services/classroom.service';
 import { ClassroomSubjectService } from '../../services/classroom-subject.service';
 import { SchoolService } from '../../../school/services/school.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { firstValueFrom } from 'rxjs';
@@ -57,6 +58,7 @@ export class SchedulesComponent implements OnInit {
   scheduleForm!: FormGroup;
   formError: string = '';
   editingSchedule: any = null;
+  isTeacher = false;
 
   daysOfWeek = [
     { value: 'MONDAY', label: 'Lundi' },
@@ -84,7 +86,8 @@ export class SchedulesComponent implements OnInit {
     private classroomService: ClassroomService,
     private classroomSubjectService: ClassroomSubjectService,
     private schoolService: SchoolService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private authService: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -93,10 +96,20 @@ export class SchedulesComponent implements OnInit {
       this.message.warning('Aucune école sélectionnée');
       return;
     }
+    this.checkUserRole();
     this.initForm();
     await this.loadAcademicYear();
     this.loadClassrooms();
     this.loadTeacherSubjects();
+  }
+
+  private checkUserRole(): void {
+    const user = this.authService.getUser();
+    if (user) {
+      const role = Array.isArray(user.roles) ? user.roles[0] : user.role || user.roles;
+      this.isTeacher = (typeof role === 'string' && (role.includes('ENSEIGNANT') || role.includes('TEACHER'))) ||
+                       (typeof user.roles === 'string' && (user.roles.includes('ENSEIGNANT') || user.roles.includes('TEACHER')));
+    }
   }
 
   async loadAcademicYear(): Promise<void> {

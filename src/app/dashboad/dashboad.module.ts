@@ -17,6 +17,7 @@ import { SubjectsComponent } from '../subjects/subjects.component';
 import { ClassroomSubjectsComponent } from '../subjects/components/classroom-subjects/classroom-subjects.component';
 import { TeacherSubjectsComponent } from '../subjects/components/teacher-subjects/teacher-subjects.component';
 import { SchedulesComponent } from '../subjects/components/schedules/schedules.component';
+import { GradesComponent } from '../grades/grades.component';
 
 
 const routes: Routes = [
@@ -39,6 +40,7 @@ const routes: Routes = [
       { path: 'classroom-subjects', component: ClassroomSubjectsComponent },
       { path: 'teacher-subjects', component: TeacherSubjectsComponent },
       { path: 'schedules', component: SchedulesComponent },
+      { path: 'grades', component: GradesComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   }

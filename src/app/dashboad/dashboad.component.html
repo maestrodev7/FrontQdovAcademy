@@ -60,6 +60,24 @@
         </li>
       </ng-container>
 
+      <ng-container *ngIf="isTeacher()">
+        <li nz-menu-item routerLink="/dashboard/classrooms">
+          <span nz-icon nzType="read"></span>
+          <span>Classes</span>
+        </li>
+
+        <li nz-submenu nzTitle="Matières" nzIcon="book">
+          <ul>
+            <li nz-menu-item routerLink="/dashboard/subjects">Liste des matières</li>
+            <li nz-menu-item routerLink="/dashboard/schedules">Emploi du temps</li>
+          </ul>
+        </li>
+
+        <li nz-menu-item routerLink="/dashboard/grades">
+          <span nz-icon nzType="form"></span> <span>Notes</span>
+        </li>
+      </ng-container>
+
     </ul>
   </nz-sider>
   <nz-content>

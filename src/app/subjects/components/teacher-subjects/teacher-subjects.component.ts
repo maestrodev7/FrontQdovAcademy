@@ -11,7 +11,9 @@ import { NzMessageService } from 'ng-zorro-antd/message';
 import { TeacherSubjectService } from '../../services/teacher-subject.service';
 import { SubjectService } from '../../services/subject.service';
 import { UsersService } from '../../../users/services/users.service';
+import { SchoolService } from '../../../school/services/school.service';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-teacher-subjects',
@@ -36,6 +38,7 @@ export class TeacherSubjectsComponent implements OnInit {
   teacherSubjects: any[] = [];
   loading = false;
   schoolId: string | null = null;
+  currentAcademicYear: any = null;
 
   isModalVisible = false;
   isSubmitting = false;
@@ -48,19 +51,41 @@ export class TeacherSubjectsComponent implements OnInit {
     private teacherSubjectService: TeacherSubjectService,
     private subjectService: SubjectService,
     private usersService: UsersService,
+    private schoolService: SchoolService,
     private message: NzMessageService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.schoolId = localStorage.getItem('schoolId');
     if (!this.schoolId) {
       this.message.warning('Aucune école sélectionnée');
       return;
     }
     this.initForm();
+    await this.loadAcademicYear();
     this.loadTeachers();
     this.loadSubjects();
     this.loadTeacherSubjects();
+  }
+
+  async loadAcademicYear(): Promise<void> {
+    try {
+      const yearsRes = await firstValueFrom(this.schoolService.getAcademicYears());
+      const academicYears = (yearsRes.data || []).map((year: any) => ({
+        id: year.id,
+        label: `${year.startDate} - ${year.endDate}`,
+        startDate: year.startDate,
+        endDate: year.endDate,
+        active: year.active
+      }));
+
+      this.currentAcademicYear = academicYears.find((year: any) => year.active === true);
+      if (!this.currentAcademicYear && academicYears.length > 0) {
+        this.currentAcademicYear = academicYears[0];
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'année académique:', error);
+    }
   }
 
   private initForm(): void {
@@ -109,7 +134,13 @@ export class TeacherSubjectsComponent implements OnInit {
   loadTeacherSubjects(): void {
     if (!this.schoolId) return;
     this.loading = true;
-    this.teacherSubjectService.getAllBySchool(this.schoolId).subscribe({
+
+    // Utiliser l'endpoint avec academic-year si disponible, sinon utiliser l'endpoint général
+    const loadObservable = this.currentAcademicYear
+      ? this.teacherSubjectService.getByAcademicYear(this.schoolId, this.currentAcademicYear.id)
+      : this.teacherSubjectService.getAllBySchool(this.schoolId);
+
+    loadObservable.subscribe({
       next: (res) => {
         this.teacherSubjects = (res.data || []).map((ts: any) => ({
           id: ts.id,

@@ -35,6 +35,10 @@ export class ScheduleService {
     return this.http.get<ApiResponse<any[]>>(this.getSchoolApi(schoolId));
   }
 
+  getByAcademicYear(schoolId: string, academicYearId: string): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.getSchoolApi(schoolId)}/academic-year/${academicYearId}`);
+  }
+
   getById(schoolId: string, id: string): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.getSchoolApi(schoolId)}/${id}`);
   }

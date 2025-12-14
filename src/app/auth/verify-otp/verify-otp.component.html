@@ -1,0 +1,52 @@
+<div class="verify-otp-container">
+  <div class="verify-otp-form">
+    <h2 class="verify-otp-title">Vérification du code OTP</h2>
+    
+    <div style="margin-bottom: 24px; padding: 12px; background-color: #f0f0f0; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px;">
+        Code OTP envoyé à : <strong>{{ email }}</strong>
+      </p>
+    </div>
+
+    <form
+      nz-form
+      [formGroup]="verifyOtpForm"
+      (ngSubmit)="verifyOtp()"
+    >
+      <nz-form-item>
+        <nz-form-control [nzErrorTip]="'Veuillez entrer le code OTP !'">
+          <nz-input-group nzPrefixIcon="safety">
+            <input
+              type="text"
+              nz-input
+              formControlName="otp"
+              placeholder="Code OTP"
+              maxlength="6"
+              style="text-align: center; font-size: 20px; letter-spacing: 8px;"
+            />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div *ngIf="errorMessage" style="color: red; margin-bottom: 12px">
+        {{ errorMessage }}
+      </div>
+
+      <button
+        nz-button
+        class="verify-otp-button"
+        [nzType]="'primary'"
+        [disabled]="loading"
+        [nzLoading]="loading"
+        nzBlock
+      >
+        Vérifier le code OTP
+      </button>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <a (click)="resendOtp()" style="margin-right: 16px;">Renvoyer le code</a>
+        <a (click)="goBack()">Retour</a>
+      </div>
+    </form>
+  </div>
+</div>

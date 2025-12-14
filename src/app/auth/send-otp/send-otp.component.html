@@ -1,0 +1,85 @@
+<div class="send-otp-container">
+  <div class="send-otp-form">
+    <h2 class="send-otp-title">
+      {{ isPasswordChange ? 'Changement de mot de passe obligatoire' : 'Réinitialisation du mot de passe' }}
+    </h2>
+    <p class="send-otp-subtitle">
+      {{ isPasswordChange 
+        ? 'Pour des raisons de sécurité, vous devez changer votre mot de passe.' 
+        : 'Choisissez une méthode pour recevoir votre code de vérification' }}
+    </p>
+
+    <form
+      nz-form
+      [formGroup]="sendOtpForm"
+      (ngSubmit)="sendOtp()"
+    >
+      <!-- Sélection de la méthode -->
+      <div class="method-selection" *ngIf="!isPasswordChange">
+        <div class="method-card" 
+             [class.selected]="selectedMethod === 'email'"
+             (click)="selectMethod('email')">
+          <span nz-icon nzType="mail" style="font-size: 24px; color: #1890ff;"></span>
+          <div>
+            <strong>Email</strong>
+            <p style="margin: 0; color: #8c8c8c; font-size: 12px;">Recommandé</p>
+          </div>
+        </div>
+
+        <div class="method-card" 
+             [class.selected]="selectedMethod === 'sms'"
+             style="opacity: 0.5; cursor: not-allowed;">
+          <span nz-icon nzType="message" style="font-size: 24px; color: #52c41a;"></span>
+          <div>
+            <strong>SMS</strong>
+            <p style="margin: 0; color: #8c8c8c; font-size: 12px;">Bientôt disponible</p>
+          </div>
+        </div>
+
+        <div class="method-card" 
+             [class.selected]="selectedMethod === 'whatsapp'"
+             style="opacity: 0.5; cursor: not-allowed;">
+          <span nz-icon nzType="wechat" style="font-size: 24px; color: #25D366;"></span>
+          <div>
+            <strong>WhatsApp</strong>
+            <p style="margin: 0; color: #8c8c8c; font-size: 12px;">Bientôt disponible</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Champ email -->
+      <nz-form-item>
+        <nz-form-control [nzErrorTip]="selectedMethod === 'email' ? 'Veuillez entrer une adresse email valide !' : 'Veuillez entrer votre numéro de téléphone !'">
+          <nz-input-group [nzPrefix]="selectedMethod === 'email' ? 'mail' : 'phone'">
+            <input
+              [type]="selectedMethod === 'email' ? 'email' : 'tel'"
+              nz-input
+              formControlName="email"
+              [placeholder]="selectedMethod === 'email' ? 'Adresse email' : 'Numéro de téléphone'"
+            />
+          </nz-input-group>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div *ngIf="errorMessage" style="color: red; margin-bottom: 12px">
+        {{ errorMessage }}
+      </div>
+
+      <button
+        nz-button
+        class="send-otp-button"
+        [nzType]="'primary'"
+        [disabled]="loading || selectedMethod !== 'email'"
+        [nzLoading]="loading"
+        nzBlock
+      >
+        Envoyer le code OTP
+      </button>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <a (click)="goToLogin()">Retour à la connexion</a>
+      </div>
+    </form>
+  </div>
+</div>
+

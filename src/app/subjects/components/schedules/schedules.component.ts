@@ -15,8 +15,10 @@ import { ScheduleService } from '../../services/schedule.service';
 import { TeacherSubjectService } from '../../services/teacher-subject.service';
 import { ClassroomService } from '../../../classroom/services/classroom.service';
 import { ClassroomSubjectService } from '../../services/classroom-subject.service';
+import { SchoolService } from '../../../school/services/school.service';
 import { FormsModule } from '@angular/forms';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-schedules',
@@ -48,6 +50,7 @@ export class SchedulesComponent implements OnInit {
   schoolId: string | null = null;
   selectedClassroomId: string | null = null;
   selectedDay: string | null = null;
+  currentAcademicYear: any = null;
 
   isModalVisible = false;
   isSubmitting = false;
@@ -80,18 +83,40 @@ export class SchedulesComponent implements OnInit {
     private teacherSubjectService: TeacherSubjectService,
     private classroomService: ClassroomService,
     private classroomSubjectService: ClassroomSubjectService,
+    private schoolService: SchoolService,
     private message: NzMessageService
   ) {}
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.schoolId = localStorage.getItem('schoolId');
     if (!this.schoolId) {
       this.message.warning('Aucune école sélectionnée');
       return;
     }
     this.initForm();
+    await this.loadAcademicYear();
     this.loadClassrooms();
     this.loadTeacherSubjects();
+  }
+
+  async loadAcademicYear(): Promise<void> {
+    try {
+      const yearsRes = await firstValueFrom(this.schoolService.getAcademicYears());
+      const academicYears = (yearsRes.data || []).map((year: any) => ({
+        id: year.id,
+        label: `${year.startDate} - ${year.endDate}`,
+        startDate: year.startDate,
+        endDate: year.endDate,
+        active: year.active
+      }));
+      
+      this.currentAcademicYear = academicYears.find((year: any) => year.active === true);
+      if (!this.currentAcademicYear && academicYears.length > 0) {
+        this.currentAcademicYear = academicYears[0];
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'année académique:', error);
+    }
   }
 
   private initForm(): void {
@@ -175,14 +200,22 @@ export class SchedulesComponent implements OnInit {
   loadSchedules(classroomId?: string): void {
     if (!this.schoolId) return;
     this.loading = true;
-
-    const loadObservable = classroomId
-      ? this.scheduleService.getByClassroom(this.schoolId, classroomId)
-      : this.scheduleService.getAllBySchool(this.schoolId);
+    
+    // Utiliser l'endpoint avec academic-year si disponible
+    let loadObservable;
+    if (this.currentAcademicYear) {
+      // Si on a une année académique, utiliser l'endpoint filtré par année académique
+      loadObservable = this.scheduleService.getByAcademicYear(this.schoolId, this.currentAcademicYear.id);
+    } else {
+      // Sinon, utiliser les endpoints normaux
+      loadObservable = classroomId
+        ? this.scheduleService.getByClassroom(this.schoolId, classroomId)
+        : this.scheduleService.getAllBySchool(this.schoolId);
+    }
 
     loadObservable.subscribe({
       next: (res) => {
-        this.schedules = (res.data || []).map((schedule: any) => ({
+        let schedules = (res.data || []).map((schedule: any) => ({
           id: schedule.id,
           classRoomId: schedule.classRoomId,
           classRoomLabel: schedule.classRoom?.label || schedule.classRoomSubject?.classRoomLabel || '',
@@ -201,6 +234,13 @@ export class SchedulesComponent implements OnInit {
           room: schedule.room || '',
           notes: schedule.notes || ''
         }));
+        
+        // Filtrer par classe si spécifiée (même si on utilise l'endpoint academic-year)
+        if (classroomId) {
+          schedules = schedules.filter(s => s.classRoomId === classroomId);
+        }
+        
+        this.schedules = schedules;
         this.loading = false;
       },
       error: (err) => {

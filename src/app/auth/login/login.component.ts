@@ -7,6 +7,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { SchoolService } from '../../school/services/school.service';
@@ -21,7 +22,8 @@ import { SchoolService } from '../../school/services/school.service';
     NzButtonModule,
     NzCheckboxModule,
     NzFormModule,
-    NzInputModule
+    NzInputModule,
+    RouterLink
   ]
 })
 export class LoginComponent {
@@ -58,6 +60,16 @@ submitForm(): void {
       this.loading = false;
 
       const user = this.authService.getUser();
+      
+      // Vérifier si le mot de passe doit être changé
+      if (user && user.passwordChanged === false) {
+        // Rediriger vers le changement de mot de passe obligatoire
+        this.router.navigate(['/auth/send-otp'], { 
+          queryParams: { email: user.email, passwordChange: 'true' } 
+        });
+        return;
+      }
+
       const role = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
 
       if (role === 'SUPER_ADMIN') {

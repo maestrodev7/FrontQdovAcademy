@@ -21,8 +21,16 @@ export class StudentInfoService {
     return this.http.get<ApiResponse<StudentInfo>>(`${this.STUDENT_INFO_API}/student/${studentId}`);
   }
 
-  updateStudentInfo(studentId: string, payload: UpdateStudentInfoRequest): Observable<ApiResponse<StudentInfo>> {
-    return this.http.put<ApiResponse<StudentInfo>>(`${this.STUDENT_INFO_API}/student/${studentId}`, payload);
+  getStudentInfosByAcademicYear(academicYearId: string): Observable<ApiResponse<StudentInfo[]>> {
+    return this.http.get<ApiResponse<StudentInfo[]>>(`${this.STUDENT_INFO_API}/academic-year/${academicYearId}`);
+  }
+
+  getStudentInfosByClassAndAcademicYear(classRoomId: string, academicYearId: string): Observable<ApiResponse<StudentInfo[]>> {
+    return this.http.get<ApiResponse<StudentInfo[]>>(`${this.STUDENT_INFO_API}/class/${classRoomId}/academic-year/${academicYearId}`);
+  }
+
+  updateStudentInfo(id: string, payload: UpdateStudentInfoRequest): Observable<ApiResponse<StudentInfo>> {
+    return this.http.put<ApiResponse<StudentInfo>>(`${this.STUDENT_INFO_API}/${id}`, payload);
   }
 
   deleteStudentInfo(id: string): Observable<ApiResponse<void>> {

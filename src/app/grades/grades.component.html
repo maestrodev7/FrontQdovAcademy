@@ -3,7 +3,15 @@
     <nz-tabset [(nzSelectedIndex)]="activeTab">
       <!-- Onglet 1: Informations des élèves -->
       <nz-tab nzTitle="Informations des élèves">
-        <div style="margin-bottom: 16px;">
+        <div style="margin-bottom: 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <nz-select
+            [(ngModel)]="selectedClassroomForStudentInfo"
+            nzPlaceHolder="Sélectionner une classe"
+            nzAllowClear
+            style="width: 250px;"
+            (ngModelChange)="onClassroomSelectedForListing($event)">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
           <button nz-button nzType="primary" (click)="openStudentInfoModal()">
             <span nz-icon nzType="plus"></span>
             Ajouter des informations d'élève
@@ -25,7 +33,7 @@
           <tbody>
             <tr *ngFor="let info of studentInfos">
               <td>{{ info.uniqueIdentifier }}</td>
-              <td>{{ info.student?.fullName || 'N/A' }}</td>
+              <td>{{ info.studentName || 'N/A' }}</td>
               <td>{{ info.birthDate | date:'dd/MM/yyyy' }}</td>
               <td>{{ info.birthPlace }}</td>
               <td>{{ info.gender === 'M' ? 'Masculin' : 'Féminin' }}</td>
@@ -223,18 +231,46 @@
   <ng-container *nzModalContent>
     <form [formGroup]="studentInfoForm" nz-form>
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Identifiant unique</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un identifiant unique">
-          <input nz-input formControlName="uniqueIdentifier" placeholder="Ex: STU-2024-001" type="text" />
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève inscrit dans la classe">
+          <nz-select
+            formControlName="studentId"
+            nzPlaceHolder="Rechercher et sélectionner un élève"
+            [nzDisabled]="!studentInfoForm.get('classRoomId')?.value || enrolledStudents.length === 0"
+            nzShowSearch
+            nzAllowClear
+            [nzFilterOption]="filterStudentOption">
+            <nz-option *ngFor="let student of enrolledStudents" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+          <div *ngIf="!studentInfoForm.get('classRoomId')?.value" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Veuillez d'abord sélectionner une classe
+          </div>
+          <div *ngIf="studentInfoForm.get('classRoomId')?.value && enrolledStudents.length === 0" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Aucun élève inscrit dans cette classe
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Parent</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un parent">
+          <nz-select
+            formControlName="parentId"
+            nzPlaceHolder="Rechercher et sélectionner un parent"
+            nzShowSearch
+            nzAllowClear
+            [nzFilterOption]="filterParentOption">
+            <nz-option *ngFor="let parent of parents" [nzValue]="parent.id" [nzLabel]="parent.label"></nz-option>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
 
@@ -266,20 +302,6 @@
         <nz-form-label [nzSpan]="6">Redoublant</nz-form-label>
         <nz-form-control [nzSpan]="18">
           <nz-switch formControlName="isRepeating"></nz-switch>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Noms des parents</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les noms des parents">
-          <input nz-input formControlName="parentNames" placeholder="Ex: Jean DUPONT, Marie DUPONT" type="text" />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Contacts des parents</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les contacts">
-          <input nz-input formControlName="parentContacts" placeholder="Tel: +237 6XX XXX XXX, Email: dupont@example.com" type="text" />
         </nz-form-control>
       </nz-form-item>
 

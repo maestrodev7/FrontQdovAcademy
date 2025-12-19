@@ -24,6 +24,7 @@ import { SubjectService } from '../subjects/services/subject.service';
 import { UsersService } from '../users/services/users.service';
 import { SchoolService } from '../school/services/school.service';
 import { ClassroomService } from '../classroom/services/classroom.service';
+import { RegistrationService } from '../registrations/services/registration.service';
 import { AuthService } from '../core/services/auth.service';
 import { CreateStudentInfoRequest } from './interfaces/student-info.interface';
 import { CreateCompetenceRequest } from './interfaces/competence.interface';
@@ -71,7 +72,13 @@ export class GradesComponent implements OnInit {
   isStudentInfoModalVisible = false;
   isSubmittingStudentInfo = false;
   students: any[] = [];
+  enrolledStudents: any[] = []; // Élèves inscrits dans la classe sélectionnée
   studentInfos: any[] = [];
+  selectedClassroomForStudentInfo: string | null = null;
+  currentAcademicYear: any = null;
+  parents: any[] = [];
+  private classRoomSubscription: any;
+  private studentSubscription: any;
 
   // Onglet 2: Compétences
   competenceForm!: FormGroup;
@@ -114,6 +121,7 @@ export class GradesComponent implements OnInit {
     private usersService: UsersService,
     private schoolService: SchoolService,
     private classroomService: ClassroomService,
+    private registrationService: RegistrationService,
     private authService: AuthService,
     private message: NzMessageService
   ) {}
@@ -138,13 +146,12 @@ export class GradesComponent implements OnInit {
     // Formulaire StudentInfo
     this.studentInfoForm = this.fb.group({
       studentId: ['', Validators.required],
-      uniqueIdentifier: ['', Validators.required],
+      parentId: ['', Validators.required],
+      classRoomId: ['', Validators.required],
       birthDate: ['', Validators.required],
       birthPlace: ['', Validators.required],
       gender: ['M', Validators.required],
       isRepeating: [false],
-      parentNames: ['', Validators.required],
-      parentContacts: ['', Validators.required],
       photoUrl: ['']
     });
 
@@ -191,16 +198,40 @@ export class GradesComponent implements OnInit {
     this.loading = true;
     try {
       await Promise.all([
-        this.loadStudents(),
+        this.loadAcademicYear(),
         this.loadSubjects(),
         this.loadTerms(),
-        this.loadClassrooms()
+        this.loadClassrooms(),
+        this.loadParents()
       ]);
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       this.message.error('Erreur lors du chargement des données');
     } finally {
       this.loading = false;
+    }
+  }
+
+  private async loadAcademicYear(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.schoolService.getAcademicYears());
+      const academicYears = res.data || [];
+      this.currentAcademicYear = academicYears.find((year: any) => year.active === true) || academicYears[0];
+    } catch (error) {
+      console.error('Erreur lors du chargement de l\'année académique:', error);
+    }
+  }
+
+  private async loadParents(): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.usersService.getParents());
+      this.parents = (res.data?.content ?? []).map((parent: any) => ({
+        id: parent.id,
+        label: `${parent.firstName} ${parent.lastName}`,
+        fullName: `${parent.firstName} ${parent.lastName}`
+      }));
+    } catch (error) {
+      console.error('Erreur lors du chargement des parents:', error);
     }
   }
 
@@ -250,12 +281,133 @@ export class GradesComponent implements OnInit {
   openStudentInfoModal(): void {
     this.isStudentInfoModalVisible = true;
     this.studentInfoForm.reset({ gender: 'M', isRepeating: false });
+    this.enrolledStudents = [];
+
+    // Écouter les changements de classe dans le formulaire
+    this.studentInfoForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.loadEnrolledStudents(classRoomId);
+      } else {
+        this.enrolledStudents = [];
+        this.studentInfoForm.patchValue({ studentId: '' }, { emitEvent: false });
+      }
+    });
+
+    // Écouter les changements d'élève pour auto-remplir le parent
+    this.studentInfoForm.get('studentId')?.valueChanges.subscribe(studentId => {
+      if (studentId) {
+        const selectedStudent = this.enrolledStudents.find(s => s.id === studentId);
+        if (selectedStudent && selectedStudent.parentId) {
+          this.studentInfoForm.patchValue({ parentId: selectedStudent.parentId }, { emitEvent: false });
+        }
+      }
+    });
   }
 
   handleStudentInfoCancel(): void {
     this.isStudentInfoModalVisible = false;
     this.studentInfoForm.reset({ gender: 'M', isRepeating: false });
+    this.enrolledStudents = [];
+    // Désabonner les observables pour éviter les fuites mémoire
+    if (this.classRoomSubscription) {
+      this.classRoomSubscription.unsubscribe();
+    }
+    if (this.studentSubscription) {
+      this.studentSubscription.unsubscribe();
+    }
   }
+
+  loadEnrolledStudents(classRoomId: string): void {
+    if (!classRoomId) {
+      this.enrolledStudents = [];
+      return;
+    }
+
+    this.loading = true;
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        console.log('Inscriptions reçues:', registrations);
+
+        if (registrations.length === 0) {
+          this.enrolledStudents = [];
+          this.loading = false;
+          return;
+        }
+
+        // Récupérer les détails complets des élèves depuis l'API users
+        const studentIds = registrations.map((reg: any) => reg.studentId || reg.student?.id).filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          console.warn('Aucun studentId trouvé dans les inscriptions');
+          this.enrolledStudents = [];
+          this.loading = false;
+          return;
+        }
+
+        try {
+          // Récupérer tous les élèves
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+          console.log('Tous les élèves récupérés:', allStudents);
+
+          // Mapper les inscriptions aux élèves
+          this.enrolledStudents = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`,
+                  parentId: student.parentId || null
+                };
+              }
+              // Si l'élève n'est pas trouvé, utiliser les données de l'inscription
+              const registration = registrations.find((reg: any) => (reg.studentId || reg.student?.id) === studentId);
+              if (registration) {
+                return {
+                  id: studentId,
+                  label: registration.studentFullName || `Élève ${studentId}`,
+                  fullName: registration.studentFullName || `Élève ${studentId}`,
+                  parentId: null
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+
+          console.log('Élèves inscrits mappés:', this.enrolledStudents);
+        } catch (error) {
+          console.error('Erreur lors du chargement des détails des élèves:', error);
+          // Fallback : utiliser les données de base de l'inscription
+          this.enrolledStudents = registrations
+            .filter((reg: any) => reg.studentId || reg.student?.id)
+            .map((reg: any) => ({
+              id: reg.studentId || reg.student?.id,
+              label: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              fullName: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              parentId: reg.student?.parentId || reg.parentId || null
+            }));
+          console.log('Fallback - Élèves inscrits:', this.enrolledStudents);
+        }
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves inscrits:', err);
+        console.error('Détails de l\'erreur:', err.error);
+        this.message.error('Erreur lors du chargement des élèves inscrits');
+        this.enrolledStudents = [];
+        this.loading = false;
+      }
+    });
+  }
+
 
   submitStudentInfo(): void {
     if (this.studentInfoForm.invalid) {
@@ -274,6 +426,11 @@ export class GradesComponent implements OnInit {
         this.isSubmittingStudentInfo = false;
         this.isStudentInfoModalVisible = false;
         this.studentInfoForm.reset({ gender: 'M', isRepeating: false });
+        this.enrolledStudents = [];
+        // Recharger les informations d'élèves si une classe est sélectionnée
+        if (this.selectedClassroomForStudentInfo && this.currentAcademicYear) {
+          this.loadStudentInfos();
+        }
       },
       error: (err) => {
         console.error('Erreur:', err);
@@ -281,6 +438,51 @@ export class GradesComponent implements OnInit {
         this.isSubmittingStudentInfo = false;
       }
     });
+  }
+
+  onClassroomSelectedForListing(classRoomId: string): void {
+    this.selectedClassroomForStudentInfo = classRoomId;
+    this.loadStudentInfos();
+  }
+
+  loadStudentInfos(): void {
+    if (!this.selectedClassroomForStudentInfo || !this.currentAcademicYear) {
+      this.studentInfos = [];
+      return;
+    }
+
+    this.loading = true;
+    this.studentInfoService.getStudentInfosByClassAndAcademicYear(
+      this.selectedClassroomForStudentInfo,
+      this.currentAcademicYear.id
+    ).subscribe({
+      next: (res) => {
+        this.studentInfos = res.data || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des informations:', err);
+        this.message.error('Erreur lors du chargement des informations');
+        this.studentInfos = [];
+        this.loading = false;
+      }
+    });
+  }
+
+  // Fonction de filtrage pour la recherche dans la liste des élèves
+  filterStudentOption(input: string, option: any): boolean {
+    if (!input) return true;
+    const searchText = input.toLowerCase();
+    const label = option?.nzLabel?.toLowerCase() || '';
+    return label.includes(searchText);
+  }
+
+  // Fonction de filtrage pour la recherche dans la liste des parents
+  filterParentOption(input: string, option: any): boolean {
+    if (!input) return true;
+    const searchText = input.toLowerCase();
+    const label = option?.nzLabel?.toLowerCase() || '';
+    return label.includes(searchText);
   }
 
   // ========== ONGLET 2: COMPÉTENCES ==========

@@ -4,6 +4,7 @@ export interface StudentInfo {
   uniqueIdentifier: string;
   birthDate: string;
   birthPlace: string;
+  studentName:string;
   gender: 'M' | 'F';
   isRepeating: boolean;
   parentNames: string;
@@ -13,13 +14,12 @@ export interface StudentInfo {
 
 export interface CreateStudentInfoRequest {
   studentId: string;
-  uniqueIdentifier: string;
+  parentId: string;
+  classRoomId: string;
   birthDate: string;
   birthPlace: string;
   gender: 'M' | 'F';
   isRepeating: boolean;
-  parentNames: string;
-  parentContacts: string;
   photoUrl?: string;
 }
 

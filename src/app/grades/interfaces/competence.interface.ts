@@ -3,6 +3,7 @@ export interface Competence {
   subjectId: string;
   description: string;
   orderNumber: number;
+  subjectName: string;
   subject?: {
     id: string;
     name: string;
@@ -13,11 +14,9 @@ export interface Competence {
 export interface CreateCompetenceRequest {
   subjectId: string;
   description: string;
-  orderNumber: number;
 }
 
 export interface UpdateCompetenceRequest {
   description?: string;
-  orderNumber?: number;
 }
 

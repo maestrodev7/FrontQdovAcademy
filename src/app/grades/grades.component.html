@@ -65,7 +65,7 @@
             <tr *ngFor="let competence of competences">
               <td>{{ competence.orderNumber }}</td>
               <td>{{ competence.description }}</td>
-              <td>{{ competence.subject?.name || 'N/A' }}</td>
+              <td>{{ competence.subjectName || 'N/A' }}</td>
             </tr>
           </tbody>
         </nz-table>
@@ -220,75 +220,77 @@
   (nzOnOk)="submitStudentInfo()"
   [nzOkLoading]="isSubmittingStudentInfo"
   [nzOkDisabled]="studentInfoForm.invalid">
-  <form [formGroup]="studentInfoForm" nz-form>
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-        <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-          <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+  <ng-container *nzModalContent>
+    <form [formGroup]="studentInfoForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
+          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
+            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Identifiant unique</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un identifiant unique">
-        <input nz-input formControlName="uniqueIdentifier" placeholder="Ex: STU-2024-001" type="text" />
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Identifiant unique</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un identifiant unique">
+          <input nz-input formControlName="uniqueIdentifier" placeholder="Ex: STU-2024-001" type="text" />
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Date de naissance</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une date">
-        <nz-date-picker formControlName="birthDate" nzFormat="yyyy-MM-dd" style="width: 100%;"></nz-date-picker>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date de naissance</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une date">
+          <nz-date-picker formControlName="birthDate" nzFormat="yyyy-MM-dd" style="width: 100%;"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Lieu de naissance</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le lieu de naissance">
-        <input nz-input formControlName="birthPlace" placeholder="Ex: Douala, Cameroun" type="text" />
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Lieu de naissance</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le lieu de naissance">
+          <input nz-input formControlName="birthPlace" placeholder="Ex: Douala, Cameroun" type="text" />
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Genre</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-select formControlName="gender">
-          <nz-option nzValue="M" nzLabel="Masculin"></nz-option>
-          <nz-option nzValue="F" nzLabel="Féminin"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Genre</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select formControlName="gender">
+            <nz-option nzValue="M" nzLabel="Masculin"></nz-option>
+            <nz-option nzValue="F" nzLabel="Féminin"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Redoublant</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-switch formControlName="isRepeating"></nz-switch>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Redoublant</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-switch formControlName="isRepeating"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Noms des parents</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les noms des parents">
-        <input nz-input formControlName="parentNames" placeholder="Ex: Jean DUPONT, Marie DUPONT" type="text" />
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Noms des parents</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les noms des parents">
+          <input nz-input formControlName="parentNames" placeholder="Ex: Jean DUPONT, Marie DUPONT" type="text" />
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Contacts des parents</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les contacts">
-        <input nz-input formControlName="parentContacts" placeholder="Tel: +237 6XX XXX XXX, Email: dupont@example.com" type="text" />
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Contacts des parents</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir les contacts">
+          <input nz-input formControlName="parentContacts" placeholder="Tel: +237 6XX XXX XXX, Email: dupont@example.com" type="text" />
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">URL Photo</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <input nz-input formControlName="photoUrl" placeholder="https://example.com/photos/student-001.jpg" type="url" />
-      </nz-form-control>
-    </nz-form-item>
-  </form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">URL Photo</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <input nz-input formControlName="photoUrl" placeholder="https://example.com/photos/student-001.jpg" type="url" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
 </nz-modal>
 
 <!-- Modal: Compétences -->
@@ -299,30 +301,25 @@
   (nzOnOk)="submitCompetence()"
   [nzOkLoading]="isSubmittingCompetence"
   [nzOkDisabled]="competenceForm.invalid">
-  <form [formGroup]="competenceForm" nz-form>
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Matière</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une matière">
-        <nz-select formControlName="subjectId" nzPlaceHolder="Sélectionner une matière">
-          <nz-option *ngFor="let subject of subjects" [nzValue]="subject.id" [nzLabel]="subject.name"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+  <ng-container *nzModalContent>
+    <form [formGroup]="competenceForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Matière</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une matière">
+          <nz-select formControlName="subjectId" nzPlaceHolder="Sélectionner une matière">
+            <nz-option *ngFor="let subject of subjects" [nzValue]="subject.id" [nzLabel]="subject.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Description</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir la description">
-        <textarea nz-input formControlName="description" rows="4" placeholder="Description de la compétence"></textarea>
-      </nz-form-control>
-    </nz-form-item>
-
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Numéro d'ordre</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un numéro d'ordre">
-        <nz-input-number formControlName="orderNumber" [nzMin]="1" [nzMax]="100" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
-  </form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Description</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir la description">
+          <textarea nz-input formControlName="description" rows="4" placeholder="Description de la compétence"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
 </nz-modal>
 
 <!-- Modal: Notes -->
@@ -334,99 +331,101 @@
   [nzOkLoading]="isSubmittingGrade"
   [nzOkDisabled]="gradeForm.invalid"
   [nzWidth]="800">
-  <form [formGroup]="gradeForm" nz-form>
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Compétence</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une compétence">
-        <nz-select formControlName="competenceId" nzPlaceHolder="Sélectionner une compétence">
-          <nz-option *ngFor="let competence of competences" [nzValue]="competence.id" [nzLabel]="competence.description"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+  <ng-container *nzModalContent>
+    <form [formGroup]="gradeForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Compétence</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une compétence">
+          <nz-select formControlName="competenceId" nzPlaceHolder="Sélectionner une compétence">
+            <nz-option *ngFor="let competence of competences" [nzValue]="competence.id" [nzLabel]="competence.description"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-        <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-          <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
+          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
+            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Trimestre</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un trimestre">
-        <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
-          <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Trimestre</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un trimestre">
+          <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
+            <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Séquence</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-select formControlName="sequenceId" nzPlaceHolder="Sélectionner une séquence (optionnel)" nzAllowClear>
-          <nz-option *ngFor="let sequence of sequences" [nzValue]="sequence.id" [nzLabel]="sequence.name"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Séquence</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select formControlName="sequenceId" nzPlaceHolder="Sélectionner une séquence (optionnel)" nzAllowClear>
+            <nz-option *ngFor="let sequence of sequences" [nzValue]="sequence.id" [nzLabel]="sequence.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Note /20</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir une note entre 0 et 20">
-        <nz-input-number formControlName="noteN20" [nzMin]="0" [nzMax]="20" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Note /20</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir une note entre 0 et 20">
+          <nz-input-number formControlName="noteN20" [nzMin]="0" [nzMax]="20" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Note moyenne /20</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir une note entre 0 et 20">
-        <nz-input-number formControlName="noteM20" [nzMin]="0" [nzMax]="20" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Note moyenne /20</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir une note entre 0 et 20">
+          <nz-input-number formControlName="noteM20" [nzMin]="0" [nzMax]="20" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Coefficient</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un coefficient">
-        <nz-input-number formControlName="coefficient" [nzMin]="0.1" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Coefficient</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir un coefficient">
+          <nz-input-number formControlName="coefficient" [nzMin]="0.1" [nzStep]="0.5" (ngModelChange)="calculateGradeValues()" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>M × Coef</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-input-number formControlName="mXCoef" [nzDisabled]="true" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>M × Coef</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-input-number formControlName="mXCoef" [nzDisabled]="true" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Cote</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-input-number formControlName="cote" [nzDisabled]="true" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Cote</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-input-number formControlName="cote" [nzDisabled]="true" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Note minimale</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-input-number formControlName="minScore" [nzMin]="0" [nzMax]="20" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Note minimale</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-input-number formControlName="minScore" [nzMin]="0" [nzMax]="20" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Note maximale</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-input-number formControlName="maxScore" [nzMin]="0" [nzMax]="20" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Note maximale</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-input-number formControlName="maxScore" [nzMin]="0" [nzMax]="20" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Appréciation</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <textarea nz-input formControlName="appreciation" rows="3" placeholder="Appréciation du professeur"></textarea>
-      </nz-form-control>
-    </nz-form-item>
-  </form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Appréciation</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <textarea nz-input formControlName="appreciation" rows="3" placeholder="Appréciation du professeur"></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
 </nz-modal>
 
 <!-- Modal: Records disciplinaires -->
@@ -438,88 +437,90 @@
   [nzOkLoading]="isSubmittingDiscipline"
   [nzOkDisabled]="disciplineForm.invalid"
   [nzWidth]="800">
-  <form [formGroup]="disciplineForm" nz-form>
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-        <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-          <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+  <ng-container *nzModalContent>
+    <form [formGroup]="disciplineForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
+          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
+            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Trimestre</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un trimestre">
-        <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
-          <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Trimestre</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un trimestre">
+          <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
+            <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
-        <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
-          <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Absences injustifiées (heures)</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
-        <nz-input-number formControlName="unjustifiedAbsencesHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Absences injustifiées (heures)</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
+          <nz-input-number formControlName="unjustifiedAbsencesHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Absences justifiées (heures)</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
-        <nz-input-number formControlName="justifiedAbsencesHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Absences justifiées (heures)</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
+          <nz-input-number formControlName="justifiedAbsencesHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Nombre de retards</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre de retards">
-        <nz-input-number formControlName="lateCount" [nzMin]="0" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Nombre de retards</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre de retards">
+          <nz-input-number formControlName="lateCount" [nzMin]="0" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Heures de retenue</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
-        <nz-input-number formControlName="detentionHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Heures de retenue</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
+          <nz-input-number formControlName="detentionHours" [nzMin]="0" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Avertissement de conduite</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-switch formControlName="conductWarning"></nz-switch>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Avertissement de conduite</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-switch formControlName="conductWarning"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Blâme de conduite</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-switch formControlName="conductBlame"></nz-switch>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Blâme de conduite</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-switch formControlName="conductBlame"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6" nzRequired>Jours d'exclusion</nz-form-label>
-      <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre de jours">
-        <nz-input-number formControlName="exclusionDays" [nzMin]="0" style="width: 100%;"></nz-input-number>
-      </nz-form-control>
-    </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Jours d'exclusion</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre de jours">
+          <nz-input-number formControlName="exclusionDays" [nzMin]="0" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
 
-    <nz-form-item>
-      <nz-form-label [nzSpan]="6">Exclusion définitive</nz-form-label>
-      <nz-form-control [nzSpan]="18">
-        <nz-switch formControlName="permanentExclusion"></nz-switch>
-      </nz-form-control>
-    </nz-form-item>
-  </form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Exclusion définitive</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-switch formControlName="permanentExclusion"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
 </nz-modal>

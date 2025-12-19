@@ -121,12 +121,12 @@ export class GradesComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.schoolId = localStorage.getItem('schoolId');
     this.currentUser = this.authService.getUser();
-    
+
     if (this.currentUser) {
-      const role = Array.isArray(this.currentUser.roles) 
-        ? this.currentUser.roles[0] 
+      const role = Array.isArray(this.currentUser.roles)
+        ? this.currentUser.roles[0]
         : this.currentUser.role || this.currentUser.roles;
-      this.isTeacher = (typeof role === 'string' && 
+      this.isTeacher = (typeof role === 'string' &&
         (role.includes('ENSEIGNANT') || role.includes('TEACHER')));
     }
 
@@ -151,8 +151,7 @@ export class GradesComponent implements OnInit {
     // Formulaire Compétence
     this.competenceForm = this.fb.group({
       subjectId: ['', Validators.required],
-      description: ['', Validators.required],
-      orderNumber: [1, [Validators.required, Validators.min(1)]]
+      description: ['', Validators.required]
     });
 
     // Formulaire Note

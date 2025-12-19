@@ -59,6 +59,10 @@ export class SchoolService {
     return this.http.get<ApiResponse<Term[]>>(`${this.TERMS_API}?academicYearId=${academicYearId}`);
   }
 
+  getTermsBySchool(schoolId: string): Observable<ApiResponse<Term[]>> {
+    return this.http.get<ApiResponse<Term[]>>(`${this.TERMS_API}?schoolId=${schoolId}`);
+  }
+
   createTerm(payload: CreateTermRequest): Observable<ApiResponse<Term>> {
     return this.http.post<ApiResponse<Term>>(this.TERMS_API, payload);
   }

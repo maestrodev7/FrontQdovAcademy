@@ -99,6 +99,10 @@ export class GradesComponent implements OnInit {
   selectedSequence: string | null = null;
   selectedCompetenceForGrade: string | null = null;
   selectedStudentForGrade: string | null = null;
+  selectedClassroomForGrade: string | null = null;
+  studentsForGrade: any[] = []; // Élèves filtrés par classe pour l'onglet Notes
+  studentsForGradeModal: any[] = []; // Élèves filtrés par classe pour le modal d'ajout de note
+  selectedClassroomForGradeModal: string | null = null;
   editingGrade: any = null;
 
   // Onglet 4: Records disciplinaires
@@ -109,6 +113,9 @@ export class GradesComponent implements OnInit {
   classrooms: any[] = [];
   selectedClassroomForDiscipline: string | null = null;
   selectedStudentForDiscipline: string | null = null;
+  studentsForDiscipline: any[] = []; // Élèves filtrés par classe pour l'onglet Records disciplinaires
+  studentsForDisciplineModal: any[] = []; // Élèves filtrés par classe pour le modal d'ajout de record disciplinaire
+  selectedClassroomForDisciplineModal: string | null = null;
   editingDiscipline: any = null;
 
   constructor(
@@ -163,6 +170,7 @@ export class GradesComponent implements OnInit {
 
     // Formulaire Note
     this.gradeForm = this.fb.group({
+      classRoomId: ['', Validators.required],
       competenceId: ['', Validators.required],
       studentId: ['', Validators.required],
       termId: ['', Validators.required],
@@ -204,6 +212,7 @@ export class GradesComponent implements OnInit {
         this.loadClassrooms(),
         this.loadParents()
       ]);
+      // Ne pas charger tous les élèves au démarrage, seulement quand une classe est sélectionnée
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       this.message.error('Erreur lors du chargement des données');
@@ -546,6 +555,121 @@ export class GradesComponent implements OnInit {
   }
 
   // ========== ONGLET 3: NOTES ==========
+  onClassroomSelectedForGrade(classRoomId: string): void {
+    console.log('Classe sélectionnée pour les notes:', classRoomId);
+    this.selectedClassroomForGrade = classRoomId;
+    this.selectedStudentForGrade = null; // Réinitialiser la sélection d'élève
+    this.grades = []; // Vider les notes
+    this.selectedSequence = null; // Réinitialiser la séquence
+
+    if (classRoomId) {
+      this.loadStudentsForGrade(classRoomId);
+    } else {
+      this.studentsForGrade = [];
+      console.log('Aucune classe sélectionnée, liste des élèves vidée');
+    }
+  }
+
+  loadStudentsForGrade(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForGrade = [];
+      this.selectedStudentForGrade = null;
+      return;
+    }
+
+    console.log('Chargement des élèves pour la classe:', classRoomId);
+    this.loading = true;
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        console.log('Inscriptions reçues pour les notes:', registrations);
+        console.log('Nombre d\'inscriptions:', registrations.length);
+
+        if (registrations.length === 0) {
+          console.warn('Aucune inscription trouvée pour cette classe');
+          this.studentsForGrade = [];
+          this.loading = false;
+          this.message.warning('Aucun élève inscrit dans cette classe');
+          return;
+        }
+
+        // Récupérer les détails complets des élèves
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        console.log('IDs des élèves extraits:', studentIds);
+
+        if (studentIds.length === 0) {
+          console.warn('Aucun studentId trouvé dans les inscriptions');
+          this.studentsForGrade = [];
+          this.loading = false;
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+          console.log('Tous les élèves récupérés:', allStudents.length);
+
+          this.studentsForGrade = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              // Si l'élève n'est pas trouvé, utiliser les données de l'inscription
+              const registration = registrations.find((reg: any) => (reg.studentId || reg.student?.id) === studentId);
+              if (registration) {
+                return {
+                  id: studentId,
+                  label: registration.studentFullName || `Élève ${studentId}`,
+                  fullName: registration.studentFullName || `Élève ${studentId}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+
+          console.log('Élèves chargés pour les notes:', this.studentsForGrade);
+          console.log('Nombre d\'élèves chargés:', this.studentsForGrade.length);
+
+          if (this.studentsForGrade.length === 0) {
+            this.message.warning('Aucun élève trouvé pour cette classe');
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des détails des élèves:', error);
+          // Fallback : utiliser les données de base de l'inscription
+          this.studentsForGrade = registrations
+            .filter((reg: any) => reg.studentId || reg.student?.id)
+            .map((reg: any) => ({
+              id: reg.studentId || reg.student?.id,
+              label: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              fullName: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`)
+            }));
+          console.log('Fallback - Élèves chargés:', this.studentsForGrade);
+        }
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves inscrits:', err);
+        console.error('Détails de l\'erreur:', err.error);
+        this.message.error('Erreur lors du chargement des élèves inscrits dans cette classe');
+        this.studentsForGrade = [];
+        this.loading = false;
+      }
+    });
+  }
+
   openGradeModal(): void {
     if (this.currentUser?.id) {
       this.gradeForm.patchValue({ teacherId: this.currentUser.id });
@@ -553,6 +677,16 @@ export class GradesComponent implements OnInit {
     this.isGradeModalVisible = true;
     this.editingGrade = null;
     this.gradeForm.reset();
+    this.studentsForGradeModal = [];
+    this.selectedClassroomForGradeModal = null;
+
+    // Pré-remplir avec les valeurs de l'onglet si disponibles
+    if (this.selectedClassroomForGrade) {
+      this.selectedClassroomForGradeModal = this.selectedClassroomForGrade;
+      this.gradeForm.patchValue({ classRoomId: this.selectedClassroomForGrade });
+      this.loadStudentsForGradeModal(this.selectedClassroomForGrade);
+    }
+
     if (this.selectedTerm) {
       this.gradeForm.patchValue({ termId: this.selectedTerm });
     }
@@ -565,6 +699,18 @@ export class GradesComponent implements OnInit {
     if (this.selectedStudentForGrade) {
       this.gradeForm.patchValue({ studentId: this.selectedStudentForGrade });
     }
+
+    // Écouter les changements de classe dans le formulaire
+    this.gradeForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForGradeModal = classRoomId;
+        this.loadStudentsForGradeModal(classRoomId);
+      } else {
+        this.studentsForGradeModal = [];
+        this.gradeForm.patchValue({ studentId: '' }, { emitEvent: false });
+      }
+    });
+
     // Charger toutes les compétences pour le select
     this.loadAllCompetences();
   }
@@ -592,6 +738,83 @@ export class GradesComponent implements OnInit {
     this.isGradeModalVisible = false;
     this.editingGrade = null;
     this.gradeForm.reset();
+    this.studentsForGradeModal = [];
+    this.selectedClassroomForGradeModal = null;
+  }
+
+  loadStudentsForGradeModal(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForGradeModal = [];
+      return;
+    }
+
+    console.log('Chargement des élèves pour le modal de note, classe:', classRoomId);
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        console.log('Inscriptions reçues pour le modal:', registrations);
+
+        if (registrations.length === 0) {
+          this.studentsForGradeModal = [];
+          return;
+        }
+
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          this.studentsForGradeModal = [];
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+
+          this.studentsForGradeModal = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              const registration = registrations.find((reg: any) => (reg.studentId || reg.student?.id) === studentId);
+              if (registration) {
+                return {
+                  id: studentId,
+                  label: registration.studentFullName || `Élève ${studentId}`,
+                  fullName: registration.studentFullName || `Élève ${studentId}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+
+          console.log('Élèves chargés pour le modal:', this.studentsForGradeModal);
+        } catch (error) {
+          console.error('Erreur lors du chargement des élèves pour le modal:', error);
+          this.studentsForGradeModal = registrations
+            .filter((reg: any) => reg.studentId || reg.student?.id)
+            .map((reg: any) => ({
+              id: reg.studentId || reg.student?.id,
+              label: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              fullName: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`)
+            }));
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves pour le modal:', err);
+        this.studentsForGradeModal = [];
+      }
+    });
   }
 
   calculateGradeValues(): void {
@@ -618,9 +841,11 @@ export class GradesComponent implements OnInit {
 
     this.isSubmittingGrade = true;
     const formValue = this.gradeForm.value;
+    // Exclure classRoomId du payload car il n'est pas requis par le backend
+    const { classRoomId, ...gradeData } = formValue;
     const payload: CreateGradeRequest = {
-      ...formValue,
-      sequenceId: formValue.sequenceId || undefined
+      ...gradeData,
+      sequenceId: gradeData.sequenceId || undefined
     };
 
     if (this.editingGrade) {
@@ -716,6 +941,31 @@ export class GradesComponent implements OnInit {
     this.editingGrade = grade;
     this.gradeForm.patchValue(grade);
     this.isGradeModalVisible = true;
+
+    // Si la note a une classe, charger les élèves de cette classe
+    if (grade.classRoomId) {
+      this.selectedClassroomForGradeModal = grade.classRoomId;
+      this.loadStudentsForGradeModal(grade.classRoomId);
+    } else if (this.selectedClassroomForGrade) {
+      // Sinon, utiliser la classe sélectionnée dans l'onglet
+      this.selectedClassroomForGradeModal = this.selectedClassroomForGrade;
+      this.gradeForm.patchValue({ classRoomId: this.selectedClassroomForGrade });
+      this.loadStudentsForGradeModal(this.selectedClassroomForGrade);
+    }
+
+    // Écouter les changements de classe dans le formulaire
+    this.gradeForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForGradeModal = classRoomId;
+        this.loadStudentsForGradeModal(classRoomId);
+      } else {
+        this.studentsForGradeModal = [];
+        this.gradeForm.patchValue({ studentId: '' }, { emitEvent: false });
+      }
+    });
+
+    // Charger toutes les compétences pour le select
+    this.loadAllCompetences();
   }
 
   deleteGrade(grade: any): void {
@@ -734,6 +984,95 @@ export class GradesComponent implements OnInit {
   }
 
   // ========== ONGLET 4: RECORDS DISCIPLINAIRES ==========
+  onClassroomSelectedForDiscipline(classRoomId: string): void {
+    console.log('Classe sélectionnée pour les records disciplinaires:', classRoomId);
+    this.selectedClassroomForDiscipline = classRoomId;
+    this.selectedStudentForDiscipline = null; // Réinitialiser la sélection d'élève
+    this.disciplineRecords = []; // Vider les records
+
+    if (classRoomId) {
+      this.loadStudentsForDiscipline(classRoomId);
+    } else {
+      this.studentsForDiscipline = [];
+      console.log('Aucune classe sélectionnée, liste des élèves vidée');
+    }
+  }
+
+  loadStudentsForDiscipline(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForDiscipline = [];
+      return;
+    }
+
+    console.log('Chargement des élèves pour les records disciplinaires, classe:', classRoomId);
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        console.log('Inscriptions reçues pour les records disciplinaires:', registrations);
+
+        if (registrations.length === 0) {
+          this.studentsForDiscipline = [];
+          return;
+        }
+
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          this.studentsForDiscipline = [];
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+
+          this.studentsForDiscipline = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              const registration = registrations.find((reg: any) => (reg.studentId || reg.student?.id) === studentId);
+              if (registration) {
+                return {
+                  id: studentId,
+                  label: registration.studentFullName || `Élève ${studentId}`,
+                  fullName: registration.studentFullName || `Élève ${studentId}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+
+          console.log('Élèves chargés pour les records disciplinaires:', this.studentsForDiscipline);
+        } catch (error) {
+          console.error('Erreur lors du chargement des élèves pour les records disciplinaires:', error);
+          this.studentsForDiscipline = registrations
+            .filter((reg: any) => reg.studentId || reg.student?.id)
+            .map((reg: any) => ({
+              id: reg.studentId || reg.student?.id,
+              label: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              fullName: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`)
+            }));
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves inscrits:', err);
+        this.studentsForDiscipline = [];
+      }
+    });
+  }
+
   openDisciplineModal(): void {
     this.isDisciplineModalVisible = true;
     this.editingDiscipline = null;
@@ -747,21 +1086,116 @@ export class GradesComponent implements OnInit {
       exclusionDays: 0,
       permanentExclusion: false
     });
+    this.studentsForDisciplineModal = [];
+    this.selectedClassroomForDisciplineModal = null;
+
+    // Pré-remplir avec les valeurs de l'onglet si disponibles
+    if (this.selectedClassroomForDiscipline) {
+      this.selectedClassroomForDisciplineModal = this.selectedClassroomForDiscipline;
+      this.disciplineForm.patchValue({ classRoomId: this.selectedClassroomForDiscipline });
+      this.loadStudentsForDisciplineModal(this.selectedClassroomForDiscipline);
+    }
+
     if (this.selectedTerm) {
       this.disciplineForm.patchValue({ termId: this.selectedTerm });
-    }
-    if (this.selectedClassroomForDiscipline) {
-      this.disciplineForm.patchValue({ classRoomId: this.selectedClassroomForDiscipline });
     }
     if (this.selectedStudentForDiscipline) {
       this.disciplineForm.patchValue({ studentId: this.selectedStudentForDiscipline });
     }
+
+    // Écouter les changements de classe dans le formulaire
+    this.disciplineForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForDisciplineModal = classRoomId;
+        this.loadStudentsForDisciplineModal(classRoomId);
+      } else {
+        this.studentsForDisciplineModal = [];
+        this.disciplineForm.patchValue({ studentId: '' }, { emitEvent: false });
+      }
+    });
+  }
+
+  loadStudentsForDisciplineModal(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForDisciplineModal = [];
+      return;
+    }
+
+    console.log('Chargement des élèves pour le modal de record disciplinaire, classe:', classRoomId);
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        console.log('Inscriptions reçues pour le modal de discipline:', registrations);
+
+        if (registrations.length === 0) {
+          this.studentsForDisciplineModal = [];
+          return;
+        }
+
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          this.studentsForDisciplineModal = [];
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+
+          this.studentsForDisciplineModal = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              const registration = registrations.find((reg: any) => (reg.studentId || reg.student?.id) === studentId);
+              if (registration) {
+                return {
+                  id: studentId,
+                  label: registration.studentFullName || `Élève ${studentId}`,
+                  fullName: registration.studentFullName || `Élève ${studentId}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+
+          console.log('Élèves chargés pour le modal de discipline:', this.studentsForDisciplineModal);
+        } catch (error) {
+          console.error('Erreur lors du chargement des élèves pour le modal de discipline:', error);
+          this.studentsForDisciplineModal = registrations
+            .filter((reg: any) => reg.studentId || reg.student?.id)
+            .map((reg: any) => ({
+              id: reg.studentId || reg.student?.id,
+              label: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`),
+              fullName: reg.studentFullName || (reg.student?.firstName && reg.student?.lastName
+                ? `${reg.student.firstName} ${reg.student.lastName}`
+                : `Élève ${reg.studentId || reg.student?.id}`)
+            }));
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves pour le modal de discipline:', err);
+        this.studentsForDisciplineModal = [];
+      }
+    });
   }
 
   handleDisciplineCancel(): void {
     this.isDisciplineModalVisible = false;
     this.editingDiscipline = null;
     this.disciplineForm.reset();
+    this.studentsForDisciplineModal = [];
+    this.selectedClassroomForDisciplineModal = null;
   }
 
   submitDiscipline(): void {
@@ -840,6 +1274,28 @@ export class GradesComponent implements OnInit {
     this.editingDiscipline = record;
     this.disciplineForm.patchValue(record);
     this.isDisciplineModalVisible = true;
+
+    // Si le record a une classe, charger les élèves de cette classe
+    if (record.classRoomId) {
+      this.selectedClassroomForDisciplineModal = record.classRoomId;
+      this.loadStudentsForDisciplineModal(record.classRoomId);
+    } else if (this.selectedClassroomForDiscipline) {
+      // Sinon, utiliser la classe sélectionnée dans l'onglet
+      this.selectedClassroomForDisciplineModal = this.selectedClassroomForDiscipline;
+      this.disciplineForm.patchValue({ classRoomId: this.selectedClassroomForDiscipline });
+      this.loadStudentsForDisciplineModal(this.selectedClassroomForDiscipline);
+    }
+
+    // Écouter les changements de classe dans le formulaire
+    this.disciplineForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForDisciplineModal = classRoomId;
+        this.loadStudentsForDisciplineModal(classRoomId);
+      } else {
+        this.studentsForDisciplineModal = [];
+        this.disciplineForm.patchValue({ studentId: '' }, { emitEvent: false });
+      }
+    });
   }
 
   deleteDiscipline(record: any): void {

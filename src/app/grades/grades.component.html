@@ -83,13 +83,30 @@
       <nz-tab nzTitle="Notes">
         <div style="margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
           <nz-select
+            [(ngModel)]="selectedClassroomForGrade"
+            nzPlaceHolder="Sélectionner une classe"
+            nzAllowClear
+            style="width: 200px;"
+            (ngModelChange)="onClassroomSelectedForGrade($event)">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+          <nz-select
             [(ngModel)]="selectedStudentForGrade"
             nzPlaceHolder="Sélectionner un élève"
             nzAllowClear
+            nzShowSearch
+            [nzFilterOption]="filterStudentOption"
             style="width: 200px;"
+            [nzDisabled]="!selectedClassroomForGrade || studentsForGrade.length === 0"
             (ngModelChange)="loadGrades()">
-            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+            <nz-option *ngFor="let student of studentsForGrade" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
           </nz-select>
+          <div *ngIf="selectedClassroomForGrade && studentsForGrade.length === 0 && !loading" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Aucun élève inscrit dans cette classe
+          </div>
+          <div *ngIf="!selectedClassroomForGrade" style="color: #999; font-size: 12px; margin-top: 4px;">
+            Veuillez d'abord sélectionner une classe
+          </div>
           <nz-select
             [(ngModel)]="selectedTerm"
             nzPlaceHolder="Sélectionner un trimestre"
@@ -126,7 +143,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let grade of grades">
-              <td>{{ grade.competence?.description || 'N/A' }}</td>
+              <td>{{ grade.competenceName || grade.competence?.description || 'N/A' }}</td>
               <td>{{ grade.noteM20 }}</td>
               <td>{{ grade.coefficient }}</td>
               <td>{{ grade.mXCoef }}</td>
@@ -149,12 +166,23 @@
       <nz-tab nzTitle="Records disciplinaires">
         <div style="margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
           <nz-select
+            [(ngModel)]="selectedClassroomForDiscipline"
+            nzPlaceHolder="Sélectionner une classe"
+            nzAllowClear
+            style="width: 200px;"
+            (ngModelChange)="onClassroomSelectedForDiscipline($event)">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+          <nz-select
             [(ngModel)]="selectedStudentForDiscipline"
             nzPlaceHolder="Sélectionner un élève"
             nzAllowClear
+            nzShowSearch
+            [nzFilterOption]="filterStudentOption"
             style="width: 200px;"
+            [nzDisabled]="!selectedClassroomForDiscipline || studentsForDiscipline.length === 0"
             (ngModelChange)="loadDisciplineRecords()">
-            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+            <nz-option *ngFor="let student of studentsForDiscipline" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
           </nz-select>
           <nz-select
             [(ngModel)]="selectedTerm"
@@ -164,18 +192,16 @@
             (ngModelChange)="loadDisciplineRecords()">
             <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
           </nz-select>
-          <nz-select
-            [(ngModel)]="selectedClassroomForDiscipline"
-            nzPlaceHolder="Sélectionner une classe"
-            nzAllowClear
-            style="width: 200px;"
-            (ngModelChange)="loadDisciplineRecords()">
-            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
-          </nz-select>
           <button nz-button nzType="primary" (click)="openDisciplineModal()" [disabled]="!selectedStudentForDiscipline || !selectedTerm">
             <span nz-icon nzType="plus"></span>
             Ajouter un record disciplinaire
           </button>
+        </div>
+        <div *ngIf="selectedClassroomForDiscipline && studentsForDiscipline.length === 0 && !loading" style="color: #ff4d4f; font-size: 12px; margin-bottom: 16px;">
+          Aucun élève inscrit dans cette classe
+        </div>
+        <div *ngIf="!selectedClassroomForDiscipline" style="color: #999; font-size: 12px; margin-bottom: 16px;">
+          Veuillez d'abord sélectionner une classe
         </div>
 
         <nz-table [nzData]="disciplineRecords" [nzPageSize]="10" nzShowSizeChanger>
@@ -195,7 +221,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let record of disciplineRecords">
-              <td>{{ record.student?.fullName || 'N/A' }}</td>
+              <td>{{ record.studentName || record.student?.fullName || 'N/A' }}</td>
               <td>{{ record.unjustifiedAbsencesHours }}</td>
               <td>{{ record.justifiedAbsencesHours }}</td>
               <td>{{ record.lateCount }}</td>
@@ -356,6 +382,15 @@
   <ng-container *nzModalContent>
     <form [formGroup]="gradeForm" nz-form>
       <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
         <nz-form-label [nzSpan]="6" nzRequired>Compétence</nz-form-label>
         <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une compétence">
           <nz-select formControlName="competenceId" nzPlaceHolder="Sélectionner une compétence">
@@ -366,10 +401,22 @@
 
       <nz-form-item>
         <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève inscrit dans la classe">
+          <nz-select
+            formControlName="studentId"
+            nzPlaceHolder="Rechercher et sélectionner un élève"
+            nzShowSearch
+            nzAllowClear
+            [nzFilterOption]="filterStudentOption"
+            [nzDisabled]="!gradeForm.get('classRoomId')?.value || studentsForGradeModal.length === 0">
+            <nz-option *ngFor="let student of studentsForGradeModal" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
           </nz-select>
+          <div *ngIf="!gradeForm.get('classRoomId')?.value" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Veuillez d'abord sélectionner une classe
+          </div>
+          <div *ngIf="gradeForm.get('classRoomId')?.value && studentsForGradeModal.length === 0" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Aucun élève inscrit dans cette classe
+          </div>
         </nz-form-control>
       </nz-form-item>
 
@@ -462,11 +509,32 @@
   <ng-container *nzModalContent>
     <form [formGroup]="disciplineForm" nz-form>
       <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève">
-          <nz-select formControlName="studentId" nzPlaceHolder="Sélectionner un élève">
-            <nz-option *ngFor="let student of students" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
           </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élève</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un élève inscrit dans la classe">
+          <nz-select
+            formControlName="studentId"
+            nzPlaceHolder="Rechercher et sélectionner un élève"
+            nzShowSearch
+            nzAllowClear
+            [nzFilterOption]="filterStudentOption"
+            [nzDisabled]="!disciplineForm.get('classRoomId')?.value || studentsForDisciplineModal.length === 0">
+            <nz-option *ngFor="let student of studentsForDisciplineModal" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+          <div *ngIf="!disciplineForm.get('classRoomId')?.value" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Veuillez d'abord sélectionner une classe
+          </div>
+          <div *ngIf="disciplineForm.get('classRoomId')?.value && studentsForDisciplineModal.length === 0" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Aucun élève inscrit dans cette classe
+          </div>
         </nz-form-control>
       </nz-form-item>
 
@@ -475,15 +543,6 @@
         <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner un trimestre">
           <nz-select formControlName="termId" nzPlaceHolder="Sélectionner un trimestre">
             <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
-          </nz-select>
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
-        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
-          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
-            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

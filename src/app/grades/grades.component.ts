@@ -16,10 +16,14 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzCheckboxModule } from 'ng-zorro-antd/checkbox';
+import { NzTagModule } from 'ng-zorro-antd/tag';
 import { StudentInfoService } from './services/student-info.service';
 import { CompetenceService } from './services/competence.service';
 import { GradeService } from './services/grade.service';
 import { DisciplineRecordService } from './services/discipline-record.service';
+import { AbsenceService } from './services/absence.service';
+import { ScheduleService } from '../subjects/services/schedule.service';
 import { SubjectService } from '../subjects/services/subject.service';
 import { UsersService } from '../users/services/users.service';
 import { SchoolService } from '../school/services/school.service';
@@ -30,6 +34,7 @@ import { CreateStudentInfoRequest } from './interfaces/student-info.interface';
 import { CreateCompetenceRequest } from './interfaces/competence.interface';
 import { CreateGradeRequest } from './interfaces/grade.interface';
 import { CreateDisciplineRecordRequest } from './interfaces/discipline-record.interface';
+import { CreateAbsenceRequest } from './interfaces/absence.interface';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -52,7 +57,9 @@ import { firstValueFrom } from 'rxjs';
     NzTableModule,
     NzDividerModule,
     NzSpinModule,
-    NzIconModule
+    NzIconModule,
+    NzCheckboxModule,
+    NzTagModule
   ],
   templateUrl: './grades.component.html',
   styleUrls: ['./grades.component.css']
@@ -118,17 +125,44 @@ export class GradesComponent implements OnInit {
   selectedClassroomForDisciplineModal: string | null = null;
   editingDiscipline: any = null;
 
+  // Onglet 5: Absences
+  absenceForm!: FormGroup;
+  isAbsenceModalVisible = false;
+  isSubmittingAbsence = false;
+  absences: any[] = [];
+  selectedClassroomForAbsence: string | null = null;
+  selectedSubjectForAbsence: string | null = null;
+  selectedDateForAbsence: string | null = null;
+  studentsForAbsence: any[] = []; // Élèves filtrés par classe pour l'onglet Absences
+  studentsForAbsenceModal: any[] = []; // Élèves filtrés par classe pour le modal d'ajout d'absence
+  selectedClassroomForAbsenceModal: string | null = null;
+  selectedStudentsForAbsence: string[] = []; // IDs des élèves absents sélectionnés
+  schedules: any[] = [];
+  editingAbsence: any = null;
+
+  selectedAbsentStudents: string[] = []; // IDs des élèves absents sélectionnés
+
+
+  selectedStudentForAbsence: string | null = null;
+  startDateForAbsence: string | null = null;
+  endDateForAbsence: string | null = null;
+  totalAbsenceHours: number = 0;
+
+  selectedStudentForAbsenceReport: string | null = null;
+
   constructor(
     private fb: FormBuilder,
     private studentInfoService: StudentInfoService,
     private competenceService: CompetenceService,
     private gradeService: GradeService,
     private disciplineRecordService: DisciplineRecordService,
+    private absenceService: AbsenceService,
     private subjectService: SubjectService,
     private usersService: UsersService,
     private schoolService: SchoolService,
     private classroomService: ClassroomService,
     private registrationService: RegistrationService,
+    private scheduleService: ScheduleService,
     private authService: AuthService,
     private message: NzMessageService
   ) {}
@@ -199,6 +233,18 @@ export class GradesComponent implements OnInit {
       conductBlame: [false],
       exclusionDays: [0, [Validators.required, Validators.min(0)]],
       permanentExclusion: [false]
+    });
+
+    // Formulaire Absence
+    this.absenceForm = this.fb.group({
+      schoolId: ['', Validators.required],
+      classRoomId: ['', Validators.required],
+      subjectId: ['', Validators.required],
+      date: ['', Validators.required],
+      absentStudentIds: [[], Validators.required],
+      numberOfHours: [1, [Validators.required, Validators.min(0.5)]],
+      scheduleId: [''],
+      notes: ['']
     });
   }
 
@@ -1311,5 +1357,453 @@ export class GradesComponent implements OnInit {
         this.message.error('Erreur lors de la suppression');
       }
     });
+  }
+
+  // ========== ONGLET 5: ABSENCES ==========
+  onClassroomSelectedForAbsence(classRoomId: string): void {
+    console.log('Classe sélectionnée pour les absences:', classRoomId);
+    this.selectedClassroomForAbsence = classRoomId;
+    this.absences = [];
+    this.selectedSubjectForAbsence = null;
+    this.selectedDateForAbsence = null;
+
+    if (classRoomId) {
+      this.loadStudentsForAbsence(classRoomId);
+    } else {
+      this.studentsForAbsence = [];
+    }
+  }
+
+  loadStudentsForAbsence(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForAbsence = [];
+      return;
+    }
+
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        if (registrations.length === 0) {
+          this.studentsForAbsence = [];
+          return;
+        }
+
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          this.studentsForAbsence = [];
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+
+          this.studentsForAbsence = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+        } catch (error) {
+          console.error('Erreur lors du chargement des élèves:', error);
+          this.studentsForAbsence = [];
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves:', err);
+        this.studentsForAbsence = [];
+      }
+    });
+  }
+
+  loadAbsences(): void {
+    if (!this.selectedClassroomForAbsence) {
+      this.absences = [];
+      return;
+    }
+
+    this.loading = true;
+
+    // Si tous les filtres sont sélectionnés, utiliser la méthode spécifique
+    if (this.selectedSubjectForAbsence && this.selectedDateForAbsence) {
+      const dateStr = typeof this.selectedDateForAbsence === 'string'
+        ? this.selectedDateForAbsence
+        : this.formatDate(this.selectedDateForAbsence);
+
+      this.absenceService.getAbsencesByClassSubjectAndDate(
+        this.selectedClassroomForAbsence,
+        this.selectedSubjectForAbsence,
+        dateStr
+      ).subscribe({
+        next: (res) => {
+          this.absences = res.data || [];
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des absences:', err);
+          this.message.error('Erreur lors du chargement des absences');
+          this.absences = [];
+          this.loading = false;
+        }
+      });
+    } else {
+      // Sinon, charger toutes les absences de la classe
+      this.absenceService.getAbsencesByClass(this.selectedClassroomForAbsence).subscribe({
+        next: (res) => {
+          let absences = res.data || [];
+
+          // Filtrer par matière si sélectionnée
+          if (this.selectedSubjectForAbsence) {
+            absences = absences.filter((absence: any) =>
+              absence.subjectId === this.selectedSubjectForAbsence ||
+              absence.subject?.id === this.selectedSubjectForAbsence
+            );
+          }
+
+          // Filtrer par date si sélectionnée
+          if (this.selectedDateForAbsence) {
+            const dateStr = typeof this.selectedDateForAbsence === 'string'
+              ? this.selectedDateForAbsence
+              : this.formatDate(this.selectedDateForAbsence);
+            absences = absences.filter((absence: any) => {
+              const absenceDate = absence.date?.split('T')[0] || absence.date;
+              return absenceDate === dateStr;
+            });
+          }
+
+          this.absences = absences;
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des absences:', err);
+          this.message.error('Erreur lors du chargement des absences');
+          this.absences = [];
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  loadStudentAbsences(): void {
+    if (!this.selectedStudentForAbsenceReport || !this.startDateForAbsence || !this.endDateForAbsence) {
+      this.absences = [];
+      this.totalAbsenceHours = 0;
+      return;
+    }
+
+    this.loading = true;
+    const startDateStr = typeof this.startDateForAbsence === 'string'
+      ? this.startDateForAbsence
+      : this.formatDate(this.startDateForAbsence);
+    const endDateStr = typeof this.endDateForAbsence === 'string'
+      ? this.endDateForAbsence
+      : this.formatDate(this.endDateForAbsence);
+
+    // Charger les absences
+    this.absenceService.getAbsencesByStudentAndDateRange(
+      this.selectedStudentForAbsenceReport,
+      { startDate: startDateStr, endDate: endDateStr }
+    ).subscribe({
+      next: (res) => {
+        this.absences = res.data || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des absences:', err);
+        this.absences = [];
+        this.loading = false;
+      }
+    });
+
+    // Charger le total d'heures
+    this.absenceService.getTotalAbsenceHoursByStudent(
+      this.selectedStudentForAbsenceReport,
+      { startDate: startDateStr, endDate: endDateStr }
+    ).subscribe({
+      next: (res) => {
+        this.totalAbsenceHours = res.data?.totalHours || 0;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement du total d\'heures:', err);
+        this.totalAbsenceHours = 0;
+      }
+    });
+  }
+
+  openAbsenceModal(): void {
+    this.isAbsenceModalVisible = true;
+    this.editingAbsence = null;
+    this.absenceForm.reset({
+      numberOfHours: 1,
+      absentStudentIds: [],
+      notes: ''
+    });
+    this.studentsForAbsenceModal = [];
+    this.schedules = [];
+    this.selectedClassroomForAbsenceModal = null;
+
+    // Pré-remplir avec les valeurs de l'onglet si disponibles
+    if (this.schoolId) {
+      this.absenceForm.patchValue({ schoolId: this.schoolId });
+    }
+    if (this.selectedClassroomForAbsence) {
+      this.selectedClassroomForAbsenceModal = this.selectedClassroomForAbsence;
+      this.absenceForm.patchValue({ classRoomId: this.selectedClassroomForAbsence });
+      this.loadStudentsForAbsenceModal(this.selectedClassroomForAbsence);
+      this.loadSchedulesForClassroom(this.selectedClassroomForAbsence);
+    }
+    if (this.selectedSubjectForAbsence) {
+      this.absenceForm.patchValue({ subjectId: this.selectedSubjectForAbsence });
+    }
+    if (this.selectedDateForAbsence) {
+      const dateStr = typeof this.selectedDateForAbsence === 'string'
+        ? this.selectedDateForAbsence
+        : this.formatDate(this.selectedDateForAbsence);
+      this.absenceForm.patchValue({ date: dateStr });
+    }
+
+    // Écouter les changements de classe dans le formulaire
+    this.absenceForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForAbsenceModal = classRoomId;
+        this.loadStudentsForAbsenceModal(classRoomId);
+        this.loadSchedulesForClassroom(classRoomId);
+      } else {
+        this.studentsForAbsenceModal = [];
+        this.schedules = [];
+        this.absenceForm.patchValue({ absentStudentIds: [] }, { emitEvent: false });
+      }
+    });
+  }
+
+  onClassroomSelectedForAbsenceModal(classRoomId: string): void {
+    if (classRoomId) {
+      this.loadStudentsForAbsenceModal(classRoomId);
+      this.loadSchedulesForClassroom(classRoomId);
+    }
+  }
+
+  loadStudentsForAbsenceModal(classRoomId: string): void {
+    if (!classRoomId) {
+      this.studentsForAbsenceModal = [];
+      return;
+    }
+
+    this.registrationService.getRegistrationsByClass(classRoomId).subscribe({
+      next: async (res) => {
+        const registrations = res.data || [];
+        if (registrations.length === 0) {
+          this.studentsForAbsenceModal = [];
+          return;
+        }
+
+        const studentIds = registrations
+          .map((reg: any) => reg.studentId || reg.student?.id)
+          .filter((id: any) => id);
+
+        if (studentIds.length === 0) {
+          this.studentsForAbsenceModal = [];
+          return;
+        }
+
+        try {
+          const studentsRes = await firstValueFrom(this.usersService.getStudents());
+          const allStudents = studentsRes.data?.content || [];
+
+          this.studentsForAbsenceModal = studentIds
+            .map((studentId: string) => {
+              const student = allStudents.find((s: any) => s.id === studentId);
+              if (student) {
+                return {
+                  id: student.id,
+                  label: `${student.firstName} ${student.lastName}`,
+                  fullName: `${student.firstName} ${student.lastName}`
+                };
+              }
+              return null;
+            })
+            .filter((s: any) => s !== null);
+        } catch (error) {
+          console.error('Erreur lors du chargement des élèves:', error);
+          this.studentsForAbsenceModal = [];
+        }
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des élèves:', err);
+        this.studentsForAbsenceModal = [];
+      }
+    });
+  }
+
+  loadSchedulesForClassroom(classRoomId: string): void {
+    if (!classRoomId || !this.schoolId) {
+      this.schedules = [];
+      return;
+    }
+
+    this.scheduleService.getByClassroom(this.schoolId, classRoomId).subscribe({
+      next: (res) => {
+        this.schedules = res.data || [];
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des horaires:', err);
+        this.schedules = [];
+      }
+    });
+  }
+
+  getScheduleLabel(schedule: any): string {
+    if (!schedule) return '';
+    const day = schedule.dayOfWeek || '';
+    const startTime = schedule.startTime || '';
+    const endTime = schedule.endTime || '';
+    const subject = schedule.subject?.name || '';
+    return `${day} ${startTime}-${endTime} ${subject ? `(${subject})` : ''}`.trim();
+  }
+
+  handleAbsenceCancel(): void {
+    this.isAbsenceModalVisible = false;
+    this.editingAbsence = null;
+    this.absenceForm.reset();
+    this.studentsForAbsenceModal = [];
+    this.schedules = [];
+    this.selectedClassroomForAbsenceModal = null;
+  }
+
+  submitAbsence(): void {
+    if (this.absenceForm.invalid) {
+      Object.keys(this.absenceForm.controls).forEach(key => {
+        this.absenceForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSubmittingAbsence = true;
+    const formValue = this.absenceForm.value;
+
+    // Formater la date
+    const dateStr = typeof formValue.date === 'string'
+      ? formValue.date
+      : this.formatDate(formValue.date);
+
+    const payload: CreateAbsenceRequest = {
+      schoolId: formValue.schoolId || this.schoolId || '',
+      classRoomId: formValue.classRoomId,
+      subjectId: formValue.subjectId,
+      date: dateStr,
+      absentStudentIds: formValue.absentStudentIds || [],
+      numberOfHours: formValue.numberOfHours,
+      scheduleId: formValue.scheduleId || undefined,
+      notes: formValue.notes || undefined
+    };
+
+    if (this.editingAbsence) {
+      this.absenceService.updateAbsence(this.editingAbsence.id, payload).subscribe({
+        next: (res) => {
+          this.message.success('Absences mises à jour avec succès !');
+          this.isSubmittingAbsence = false;
+          this.isAbsenceModalVisible = false;
+          this.handleAbsenceCancel();
+          // Mettre à jour les filtres avec les valeurs du formulaire et recharger
+          this.selectedClassroomForAbsence = formValue.classRoomId;
+          this.selectedSubjectForAbsence = formValue.subjectId;
+          this.selectedDateForAbsence = dateStr;
+          this.loadAbsences();
+        },
+        error: (err) => {
+          console.error('Erreur:', err);
+          this.message.error(err?.error?.message || 'Erreur lors de la mise à jour');
+          this.isSubmittingAbsence = false;
+        }
+      });
+    } else {
+      this.absenceService.createAbsence(payload).subscribe({
+        next: (res) => {
+          this.message.success('Absences enregistrées avec succès !');
+          this.isSubmittingAbsence = false;
+          this.isAbsenceModalVisible = false;
+          this.handleAbsenceCancel();
+          // Mettre à jour les filtres avec les valeurs du formulaire et recharger
+          this.selectedClassroomForAbsence = formValue.classRoomId;
+          this.selectedSubjectForAbsence = formValue.subjectId;
+          this.selectedDateForAbsence = dateStr;
+          this.loadAbsences();
+        },
+        error: (err) => {
+          console.error('Erreur:', err);
+          this.message.error(err?.error?.message || 'Erreur lors de l\'enregistrement');
+          this.isSubmittingAbsence = false;
+        }
+      });
+    }
+  }
+
+  editAbsence(absence: any): void {
+    this.editingAbsence = absence;
+    this.absenceForm.patchValue({
+      schoolId: absence.schoolId || this.schoolId,
+      classRoomId: absence.classRoomId,
+      subjectId: absence.subjectId,
+      date: absence.date,
+      absentStudentIds: absence.absentStudentIds || [],
+      numberOfHours: absence.numberOfHours,
+      scheduleId: absence.scheduleId || '',
+      notes: absence.notes || ''
+    });
+    this.isAbsenceModalVisible = true;
+
+    // Charger les élèves de la classe
+    if (absence.classRoomId) {
+      this.selectedClassroomForAbsenceModal = absence.classRoomId;
+      this.loadStudentsForAbsenceModal(absence.classRoomId);
+      this.loadSchedulesForClassroom(absence.classRoomId);
+    }
+
+    // Écouter les changements de classe
+    this.absenceForm.get('classRoomId')?.valueChanges.subscribe(classRoomId => {
+      if (classRoomId) {
+        this.selectedClassroomForAbsenceModal = classRoomId;
+        this.loadStudentsForAbsenceModal(classRoomId);
+        this.loadSchedulesForClassroom(classRoomId);
+      }
+    });
+  }
+
+  deleteAbsence(absence: any): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette absence ?')) return;
+
+    this.absenceService.deleteAbsence(absence.id).subscribe({
+      next: () => {
+        this.message.success('Absence supprimée avec succès !');
+        this.loadAbsences();
+      },
+      error: (err) => {
+        console.error('Erreur:', err);
+        this.message.error('Erreur lors de la suppression');
+      }
+    });
+  }
+
+  formatDate(date: any): string {
+    if (!date) return '';
+    if (typeof date === 'string') return date;
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+    // Si c'est un objet avec des propriétés de date
+    const year = date.getFullYear?.() || date.year;
+    const month = (date.getMonth?.() !== undefined ? date.getMonth() + 1 : date.month)?.toString().padStart(2, '0');
+    const day = (date.getDate?.() || date.day)?.toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

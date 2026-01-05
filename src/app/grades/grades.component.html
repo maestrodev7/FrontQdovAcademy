@@ -242,6 +242,119 @@
           </tbody>
         </nz-table>
       </nz-tab>
+
+      <!-- Onglet 5: Absences -->
+      <nz-tab nzTitle="Absences">
+        <div style="margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+          <nz-select
+            [(ngModel)]="selectedClassroomForAbsence"
+            nzPlaceHolder="Sélectionner une classe"
+            nzAllowClear
+            style="width: 200px;"
+            (ngModelChange)="onClassroomSelectedForAbsence($event)">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+          <nz-select
+            [(ngModel)]="selectedSubjectForAbsence"
+            nzPlaceHolder="Sélectionner une matière"
+            nzAllowClear
+            style="width: 200px;"
+            (ngModelChange)="loadAbsences()">
+            <nz-option *ngFor="let subject of subjects" [nzValue]="subject.id" [nzLabel]="subject.name"></nz-option>
+          </nz-select>
+          <nz-date-picker
+            [(ngModel)]="selectedDateForAbsence"
+            nzPlaceHolder="Sélectionner une date"
+            nzFormat="yyyy-MM-dd"
+            style="width: 200px;"
+            (ngModelChange)="loadAbsences()">
+          </nz-date-picker>
+          <button nz-button nzType="primary" (click)="openAbsenceModal()" [disabled]="!selectedClassroomForAbsence">
+            <span nz-icon nzType="plus"></span>
+            Enregistrer des absences
+          </button>
+        </div>
+
+        <!-- Section pour les rapports d'absences par élève -->
+        <nz-divider nzText="Rapport d'absences par élève"></nz-divider>
+        <div style="margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+          <nz-select
+            [(ngModel)]="selectedStudentForAbsenceReport"
+            nzPlaceHolder="Sélectionner un élève"
+            nzAllowClear
+            nzShowSearch
+            [nzFilterOption]="filterStudentOption"
+            style="width: 200px;"
+            [nzDisabled]="!selectedClassroomForAbsence || studentsForAbsence.length === 0">
+            <nz-option *ngFor="let student of studentsForAbsence" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+          <nz-date-picker
+            [(ngModel)]="startDateForAbsence"
+            nzPlaceHolder="Date de début"
+            nzFormat="yyyy-MM-dd"
+            style="width: 200px;"
+            (ngModelChange)="loadStudentAbsences()">
+          </nz-date-picker>
+          <nz-date-picker
+            [(ngModel)]="endDateForAbsence"
+            nzPlaceHolder="Date de fin"
+            nzFormat="yyyy-MM-dd"
+            style="width: 200px;"
+            (ngModelChange)="loadStudentAbsences()">
+          </nz-date-picker>
+          <button nz-button nzType="default" (click)="loadStudentAbsences()" [disabled]="!selectedStudentForAbsenceReport || !startDateForAbsence || !endDateForAbsence">
+            <span nz-icon nzType="search"></span>
+            Rechercher
+          </button>
+        </div>
+        <div *ngIf="totalAbsenceHours > 0" style="margin-bottom: 16px; padding: 12px; background-color: #f0f0f0; border-radius: 4px;">
+          <strong>Total d'heures d'absence : {{ totalAbsenceHours }} heures</strong>
+        </div>
+
+        <nz-table [nzData]="absences" [nzPageSize]="10" nzShowSizeChanger>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Classe</th>
+              <th>Matière</th>
+              <th>Élèves absents</th>
+              <th>Nombre d'heures</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let absence of absences">
+              <td>{{ absence.date | date:'dd/MM/yyyy' }}</td>
+              <td>{{ absence.classRoomLabel || absence.classRoom?.label || absence.classRoomId || 'N/A' }}</td>
+              <td>{{ absence.subjectName || absence.subject?.name || absence.subjectId || 'N/A' }}</td>
+              <td>
+                <nz-tag *ngIf="absence.studentName" style="margin: 2px;">
+                  {{ absence.studentName }}
+                </nz-tag>
+                <span *ngIf="!absence.studentName && absence.absentStudents && absence.absentStudents.length > 0">
+                  <nz-tag *ngFor="let student of absence.absentStudents" style="margin: 2px;">
+                    {{ student.fullName || student.firstName + ' ' + student.lastName || student.id }}
+                  </nz-tag>
+                </span>
+                <span *ngIf="!absence.studentName && (!absence.absentStudents || absence.absentStudents.length === 0)">
+                  {{ absence.absentStudentIds?.length || 0 }} élève(s)
+                </span>
+              </td>
+              <td>{{ absence.numberOfHours }}</td>
+              <td>{{ absence.notes || '-' }}</td>
+              <td>
+                <button nz-button nzType="link" nzSize="small" (click)="editAbsence(absence)">
+                  <span nz-icon nzType="edit"></span>
+                </button>
+                <button nz-button nzType="link" nzDanger nzSize="small" (click)="deleteAbsence(absence)">
+                  <span nz-icon nzType="delete"></span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </nz-table>
+      </nz-tab>
     </nz-tabset>
   </nz-spin>
 </nz-card>
@@ -600,6 +713,90 @@
         <nz-form-label [nzSpan]="6">Exclusion définitive</nz-form-label>
         <nz-form-control [nzSpan]="18">
           <nz-switch formControlName="permanentExclusion"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal: Absences -->
+<nz-modal
+  [(nzVisible)]="isAbsenceModalVisible"
+  [nzTitle]="editingAbsence ? 'Modifier les absences' : 'Enregistrer des absences'"
+  (nzOnCancel)="handleAbsenceCancel()"
+  (nzOnOk)="submitAbsence()"
+  [nzOkLoading]="isSubmittingAbsence"
+  [nzOkDisabled]="absenceForm.invalid"
+  [nzWidth]="900">
+  <ng-container *nzModalContent>
+    <form [formGroup]="absenceForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Classe</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une classe">
+          <nz-select formControlName="classRoomId" nzPlaceHolder="Sélectionner une classe">
+            <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Matière</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une matière">
+          <nz-select formControlName="subjectId" nzPlaceHolder="Sélectionner une matière">
+            <nz-option *ngFor="let subject of subjects" [nzValue]="subject.id" [nzLabel]="subject.name"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Date</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner une date">
+          <nz-date-picker formControlName="date" nzFormat="yyyy-MM-dd" style="width: 100%;"></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Horaire (optionnel)</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <nz-select formControlName="scheduleId" nzPlaceHolder="Sélectionner un horaire (optionnel)" nzAllowClear>
+            <nz-option *ngFor="let schedule of schedules" [nzValue]="schedule.id" [nzLabel]="getScheduleLabel(schedule)"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Nombre d'heures</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez saisir le nombre d'heures">
+          <nz-input-number formControlName="numberOfHours" [nzMin]="0.5" [nzStep]="0.5" style="width: 100%;"></nz-input-number>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired>Élèves absents</nz-form-label>
+        <nz-form-control [nzSpan]="18" nzErrorTip="Veuillez sélectionner au moins un élève">
+          <nz-select
+            formControlName="absentStudentIds"
+            nzPlaceHolder="Sélectionner les élèves absents"
+            nzMode="multiple"
+            nzShowSearch
+            [nzFilterOption]="filterStudentOption"
+            [nzDisabled]="!absenceForm.get('classRoomId')?.value || studentsForAbsenceModal.length === 0"
+            style="width: 100%;">
+            <nz-option *ngFor="let student of studentsForAbsenceModal" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+          </nz-select>
+          <div *ngIf="!absenceForm.get('classRoomId')?.value" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Veuillez d'abord sélectionner une classe
+          </div>
+          <div *ngIf="absenceForm.get('classRoomId')?.value && studentsForAbsenceModal.length === 0" style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+            Aucun élève inscrit dans cette classe
+          </div>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6">Notes</nz-form-label>
+        <nz-form-control [nzSpan]="18">
+          <textarea nz-input formControlName="notes" rows="3" placeholder="Notes sur les absences (ex: Cours de mathématiques - Absences non justifiées)"></textarea>
         </nz-form-control>
       </nz-form-item>
     </form>

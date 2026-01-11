@@ -355,6 +355,80 @@
           </tbody>
         </nz-table>
       </nz-tab>
+
+      <!-- Onglet 6: Bulletins -->
+      <nz-tab nzTitle="Bulletins">
+        <div style="margin-bottom: 16px; padding: 16px; background-color: #f9f9f9; border-radius: 4px;">
+          <h3 style="margin-top: 0;">Générer un Bulletin Scolaire</h3>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+            <nz-select
+              [(ngModel)]="selectedClassroomForReportCard"
+              nzPlaceHolder="Sélectionner une classe"
+              nzAllowClear
+              style="width: 200px;"
+              (ngModelChange)="onClassroomSelectedForReportCard($event)">
+              <nz-option *ngFor="let classroom of classrooms" [nzValue]="classroom.id" [nzLabel]="classroom.label"></nz-option>
+            </nz-select>
+            <nz-select
+              [(ngModel)]="selectedStudentForReportCard"
+              nzPlaceHolder="Sélectionner un élève"
+              nzAllowClear
+              nzShowSearch
+              [nzFilterOption]="filterStudentOptionForReportCard"
+              style="width: 250px;"
+              [nzDisabled]="!selectedClassroomForReportCard || studentsForReportCard.length === 0">
+              <nz-option *ngFor="let student of studentsForReportCard" [nzValue]="student.id" [nzLabel]="student.label"></nz-option>
+            </nz-select>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <label style="margin-right: 8px;">Type de période:</label>
+            <nz-select
+              [(ngModel)]="reportCardPeriodType"
+              style="width: 150px;"
+              (ngModelChange)="onReportCardPeriodTypeChange()">
+              <nz-option [nzValue]="'TERM'" nzLabel="Trimestre"></nz-option>
+              <nz-option [nzValue]="'SEQUENCE'" nzLabel="Séquence"></nz-option>
+            </nz-select>
+          </div>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+            <nz-select
+              *ngIf="reportCardPeriodType === 'TERM'"
+              [(ngModel)]="selectedTermForReportCard"
+              nzPlaceHolder="Sélectionner un trimestre"
+              nzAllowClear
+              style="width: 200px;">
+              <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
+            </nz-select>
+            <div *ngIf="reportCardPeriodType === 'SEQUENCE'" style="display: flex; gap: 16px; align-items: center;">
+              <nz-select
+                [(ngModel)]="selectedTermForReportCard"
+                nzPlaceHolder="Sélectionner un trimestre"
+                nzAllowClear
+                style="width: 200px;"
+                (ngModelChange)="loadSequencesForReportCard()">
+                <nz-option *ngFor="let term of terms" [nzValue]="term.id" [nzLabel]="term.name"></nz-option>
+              </nz-select>
+              <nz-select
+                [(ngModel)]="selectedSequenceForReportCard"
+                nzPlaceHolder="Sélectionner une séquence"
+                nzAllowClear
+                style="width: 200px;"
+                [nzDisabled]="!selectedTermForReportCard">
+                <nz-option *ngFor="let sequence of sequences" [nzValue]="sequence.id" [nzLabel]="sequence.name"></nz-option>
+              </nz-select>
+            </div>
+            <button
+              nz-button
+              nzType="primary"
+              (click)="loadReportCard()"
+              [nzLoading]="isLoadingReportCard"
+              [disabled]="!selectedStudentForReportCard || !selectedClassroomForReportCard || (reportCardPeriodType === 'TERM' ? !selectedTermForReportCard : !selectedSequenceForReportCard)">
+              <span nz-icon nzType="file-text"></span>
+              Générer le bulletin
+            </button>
+          </div>
+        </div>
+      </nz-tab>
     </nz-tabset>
   </nz-spin>
 </nz-card>
@@ -800,5 +874,164 @@
         </nz-form-control>
       </nz-form-item>
     </form>
+  </ng-container>
+</nz-modal>
+
+<!-- Modal: Bulletin -->
+<nz-modal
+  [(nzVisible)]="isReportCardModalVisible"
+  nzTitle="Bulletin Scolaire"
+  (nzOnCancel)="closeReportCardModal()"
+  [nzFooter]="null"
+  [nzWidth]="1200">
+  <ng-container *nzModalContent>
+    <nz-spin [nzSpinning]="isLoadingReportCard">
+      <div *ngIf="reportCard" style="padding: 20px; background: white;">
+        <!-- En-tête -->
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px;">
+          <h1 style="margin: 0 0 10px 0;">{{ reportCard.schoolName || 'École' }}</h1>
+          <p *ngIf="reportCard.schoolAddress" style="margin: 5px 0;">{{ reportCard.schoolAddress }}</p>
+          <p *ngIf="reportCard.schoolPhoneNumber || reportCard.schoolEmail" style="margin: 5px 0;">
+            <span *ngIf="reportCard.schoolPhoneNumber">Tél: {{ reportCard.schoolPhoneNumber }}</span>
+            <span *ngIf="reportCard.schoolPhoneNumber && reportCard.schoolEmail"> | </span>
+            <span *ngIf="reportCard.schoolEmail">Email: {{ reportCard.schoolEmail }}</span>
+          </p>
+          <h2 style="margin: 15px 0 10px 0;">BULLETIN SCOLAIRE</h2>
+          <p style="margin: 5px 0;"><strong>{{ (reportCard.termName || '') || (reportCard.sequenceName || '') }}</strong></p>
+          <p style="margin: 5px 0;">Année scolaire : {{ reportCard.academicYearLabel || reportCard.academicYearId }}</p>
+        </div>
+
+        <!-- Informations de l'élève -->
+        <div style="display: flex; justify-content: space-between; margin: 20px 0; padding: 15px; background-color: #f9f9f9; border: 1px solid #ddd;">
+          <div>
+            <p><strong>Nom et Prénoms de l'élève :</strong> {{ reportCard.studentName }}</p>
+            <p *ngIf="reportCard.studentUniqueIdentifier"><strong>Identifiant Unique :</strong> {{ reportCard.studentUniqueIdentifier }}</p>
+            <p *ngIf="reportCard.studentBirthDate"><strong>Date et lieu de naissance :</strong> {{ reportCard.studentBirthDate | date:'dd/MM/yyyy' }}{{ reportCard.studentBirthPlace ? ' - ' + reportCard.studentBirthPlace : '' }}</p>
+            <p *ngIf="reportCard.studentGender"><strong>Genre :</strong> {{ reportCard.studentGender === 'M' ? 'Masculin' : 'Féminin' }}</p>
+            <p *ngIf="reportCard.parentNames"><strong>Noms et contacts des Parents / Tuteurs :</strong> {{ reportCard.parentNames }}{{ reportCard.parentContacts ? ' - ' + reportCard.parentContacts : '' }}</p>
+          </div>
+          <div>
+            <p><strong>Classe :</strong> {{ reportCard.classRoomLabel || reportCard.classRoomId }}</p>
+            <p *ngIf="reportCard.studentIsRepeating !== undefined"><strong>Redoublant :</strong> {{ reportCard.studentIsRepeating ? 'Oui' : 'Non' }}</p>
+          </div>
+        </div>
+
+        <!-- Notes par matière -->
+        <div style="margin: 20px 0;">
+          <h3>NOTES</h3>
+          <div *ngFor="let subjectGrade of reportCard.subjectGrades" style="margin-bottom: 20px;">
+            <h4 style="background-color: #f0f0f0; padding: 8px; margin: 10px 0;">{{ subjectGrade.subjectName }} ({{ subjectGrade.teacherName || 'M/Mme' }})</h4>
+            <nz-table [nzData]="subjectGrade.competences" [nzShowPagination]="false" style="margin-bottom: 15px;">
+              <thead>
+                <tr>
+                  <th>COMPÉTENCES ÉVALUÉES</th>
+                  <th style="text-align: center;">N/20</th>
+                  <th style="text-align: center;">M/20</th>
+                  <th style="text-align: center;">Coef</th>
+                  <th style="text-align: center;">M×Coef</th>
+                  <th style="text-align: center;">COTE</th>
+                  <th style="text-align: center;">[Min - Max]</th>
+                  <th>Appréciations</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let competence of subjectGrade.competences">
+                  <td>{{ competence.competenceDescription }}</td>
+                  <td style="text-align: center;">{{ competence.noteN20 }}</td>
+                  <td style="text-align: center;">{{ competence.noteM20 }}</td>
+                  <td style="text-align: center;">{{ competence.coefficient }}</td>
+                  <td style="text-align: center;">{{ competence.mXCoef }}</td>
+                  <td style="text-align: center;">{{ competence.cote }}</td>
+                  <td style="text-align: center;">{{ competence.minScore !== undefined && competence.maxScore !== undefined ? '[' + competence.minScore + ' - ' + competence.maxScore + ']' : '-' }}</td>
+                  <td>{{ competence.appreciation || '-' }}</td>
+                </tr>
+              </tbody>
+            </nz-table>
+            <div style="margin-top: 10px; padding: 8px; background-color: #f9f9f9;">
+              <strong>Matière - TOTAL: {{ subjectGrade.totalScore }} | MOYENNE: {{ subjectGrade.averageScore }} | COEF: {{ subjectGrade.subjectCoefficient }} | MOYENNE × COEF: {{ subjectGrade.weightedAverage }} | COTE: {{ subjectGrade.cote }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div style="margin: 20px 0; padding: 15px; background-color: #f0f0f0; border: 1px solid #ddd;">
+          <h3>Travail de l'élève</h3>
+          <nz-table [nzData]="[{}]" [nzShowPagination]="false">
+            <tbody>
+              <tr>
+                <td><strong>TOTAL GENERAL:</strong></td>
+                <td><strong>{{ reportCard.totalGeneral || 0 }}</strong></td>
+              </tr>
+              <tr>
+                <td><strong>COEF:</strong></td>
+                <td><strong>{{ reportCard.totalCoefficient || 0 }}</strong></td>
+              </tr>
+              <tr>
+                <td><strong>MOYENNE TRIM:</strong></td>
+                <td><strong>{{ (reportCard.averageTrim || 0).toFixed(2) }} / 20</strong></td>
+              </tr>
+              <tr>
+                <td><strong>COTE:</strong></td>
+                <td><strong>{{ (reportCard.cote || 0).toFixed(2) }} / 20</strong></td>
+              </tr>
+              <tr *ngIf="reportCard.totalAbsenceHours !== undefined">
+                <td>Total heures d'absence:</td>
+                <td>{{ reportCard.totalAbsenceHours }}</td>
+              </tr>
+            </tbody>
+          </nz-table>
+        </div>
+
+        <!-- Record disciplinaire -->
+        <div *ngIf="reportCard.disciplineRecord" style="margin: 20px 0; padding: 15px; background-color: #fff9e6; border: 1px solid #ddd;">
+          <h3>Record Disciplinaire</h3>
+          <nz-table [nzData]="[{}]" [nzShowPagination]="false">
+            <tbody>
+              <tr>
+                <td>Absences non justifiées (heures):</td>
+                <td>{{ reportCard.disciplineRecord.unjustifiedAbsencesHours }}</td>
+              </tr>
+              <tr>
+                <td>Absences justifiées (heures):</td>
+                <td>{{ reportCard.disciplineRecord.justifiedAbsencesHours }}</td>
+              </tr>
+              <tr>
+                <td>Nombre de retards:</td>
+                <td>{{ reportCard.disciplineRecord.lateCount }}</td>
+              </tr>
+              <tr>
+                <td>Heures de retenue:</td>
+                <td>{{ reportCard.disciplineRecord.detentionHours }}</td>
+              </tr>
+              <tr *ngIf="reportCard.disciplineRecord.conductWarning">
+                <td colspan="2"><strong>Avertissement de conduite</strong></td>
+              </tr>
+              <tr *ngIf="reportCard.disciplineRecord.conductBlame">
+                <td colspan="2"><strong>Blâme</strong></td>
+              </tr>
+              <tr *ngIf="reportCard.disciplineRecord.exclusionDays > 0">
+                <td colspan="2"><strong>Exclusion: {{ reportCard.disciplineRecord.exclusionDays }} jour(s)</strong></td>
+              </tr>
+              <tr *ngIf="reportCard.disciplineRecord.permanentExclusion">
+                <td colspan="2"><strong>Exclusion définitive</strong></td>
+              </tr>
+            </tbody>
+          </nz-table>
+        </div>
+
+        <!-- Date de génération -->
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+          <p>Généré le {{ reportCard.generatedDate | date:'dd/MM/yyyy' }}</p>
+        </div>
+
+        <!-- Bouton de téléchargement -->
+        <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+          <button nz-button nzType="primary" (click)="downloadReportCardPDF()">
+            <span nz-icon nzType="download"></span>
+            Télécharger/Imprimer le PDF
+          </button>
+        </div>
+      </div>
+    </nz-spin>
   </ng-container>
 </nz-modal>

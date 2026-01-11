@@ -23,6 +23,7 @@ import { CompetenceService } from './services/competence.service';
 import { GradeService } from './services/grade.service';
 import { DisciplineRecordService } from './services/discipline-record.service';
 import { AbsenceService } from './services/absence.service';
+import { ReportCardService } from './services/report-card.service';
 import { ScheduleService } from '../subjects/services/schedule.service';
 import { SubjectService } from '../subjects/services/subject.service';
 import { UsersService } from '../users/services/users.service';
@@ -35,6 +36,7 @@ import { CreateCompetenceRequest } from './interfaces/competence.interface';
 import { CreateGradeRequest } from './interfaces/grade.interface';
 import { CreateDisciplineRecordRequest } from './interfaces/discipline-record.interface';
 import { CreateAbsenceRequest } from './interfaces/absence.interface';
+import { ReportCard } from './interfaces/report-card.interface';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -150,6 +152,17 @@ export class GradesComponent implements OnInit {
 
   selectedStudentForAbsenceReport: string | null = null;
 
+  // Onglet 6: Bulletins
+  reportCard: ReportCard | null = null;
+  isReportCardModalVisible = false;
+  isLoadingReportCard = false;
+  selectedStudentForReportCard: string | null = null;
+  selectedClassroomForReportCard: string | null = null;
+  selectedTermForReportCard: string | null = null;
+  selectedSequenceForReportCard: string | null = null;
+  reportCardPeriodType: 'TERM' | 'SEQUENCE' = 'TERM';
+  studentsForReportCard: any[] = [];
+
   constructor(
     private fb: FormBuilder,
     private studentInfoService: StudentInfoService,
@@ -157,6 +170,7 @@ export class GradesComponent implements OnInit {
     private gradeService: GradeService,
     private disciplineRecordService: DisciplineRecordService,
     private absenceService: AbsenceService,
+    private reportCardService: ReportCardService,
     private subjectService: SubjectService,
     private usersService: UsersService,
     private schoolService: SchoolService,
@@ -1805,5 +1819,396 @@ export class GradesComponent implements OnInit {
     const month = (date.getMonth?.() !== undefined ? date.getMonth() + 1 : date.month)?.toString().padStart(2, '0');
     const day = (date.getDate?.() || date.day)?.toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  // ========== Méthodes pour les Bulletins ==========
+
+  onClassroomSelectedForReportCard(classRoomId: string | null): void {
+    this.selectedClassroomForReportCard = classRoomId;
+    this.selectedStudentForReportCard = null;
+    this.reportCard = null;
+    if (classRoomId) {
+      this.loadStudentsForReportCard(classRoomId);
+    } else {
+      this.studentsForReportCard = [];
+    }
+  }
+
+  async loadStudentsForReportCard(classRoomId: string): Promise<void> {
+    try {
+      const res = await firstValueFrom(this.registrationService.getRegistrationsByClass(classRoomId));
+      const registrations = res.data || [];
+
+      const studentIds = registrations.map((reg: any) => reg.studentId || reg.student?.id).filter((id: any) => id);
+
+      if (studentIds.length === 0) {
+        this.studentsForReportCard = [];
+        return;
+      }
+
+      const studentsRes = await firstValueFrom(this.usersService.getStudents());
+      const allStudents = studentsRes.data?.content || [];
+
+      this.studentsForReportCard = allStudents
+        .filter((student: any) => studentIds.includes(student.id))
+        .map((student: any) => ({
+          id: student.id,
+          label: `${student.firstName} ${student.lastName}`,
+          fullName: `${student.firstName} ${student.lastName}`
+        }));
+    } catch (error) {
+      console.error('Erreur lors du chargement des élèves pour le bulletin:', error);
+      this.message.error('Erreur lors du chargement des élèves');
+      this.studentsForReportCard = [];
+    }
+  }
+
+  onReportCardPeriodTypeChange(): void {
+    if (this.reportCardPeriodType === 'TERM') {
+      this.selectedSequenceForReportCard = null;
+    } else {
+      this.selectedTermForReportCard = null;
+      if (this.selectedStudentForReportCard && this.selectedClassroomForReportCard) {
+        this.loadSequencesForReportCard();
+      }
+    }
+  }
+
+  loadSequencesForReportCard(): void {
+    if (!this.selectedTermForReportCard) {
+      this.sequences = [];
+      return;
+    }
+    this.schoolService.getSequencesByTerm(this.selectedTermForReportCard).subscribe({
+      next: (res) => {
+        this.sequences = res.data || [];
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des séquences:', err);
+      }
+    });
+  }
+
+  loadReportCard(): void {
+    if (!this.selectedStudentForReportCard || !this.selectedClassroomForReportCard || !this.currentAcademicYear) {
+      this.message.warning('Veuillez sélectionner un élève, une classe et une période');
+      return;
+    }
+
+    this.isLoadingReportCard = true;
+    this.reportCard = null;
+
+    let loadObservable;
+
+    if (this.reportCardPeriodType === 'TERM') {
+      if (!this.selectedTermForReportCard) {
+        this.message.warning('Veuillez sélectionner un trimestre');
+        this.isLoadingReportCard = false;
+        return;
+      }
+      console.log('[GradesComponent] Chargement du bulletin - Trimestre:', {
+        studentId: this.selectedStudentForReportCard,
+        classRoomId: this.selectedClassroomForReportCard,
+        academicYearId: this.currentAcademicYear.id,
+        termId: this.selectedTermForReportCard
+      });
+      loadObservable = this.reportCardService.getReportCardByTerm(
+        this.selectedStudentForReportCard,
+        this.selectedClassroomForReportCard,
+        this.currentAcademicYear.id,
+        this.selectedTermForReportCard
+      );
+    } else {
+      if (!this.selectedSequenceForReportCard) {
+        this.message.warning('Veuillez sélectionner une séquence');
+        this.isLoadingReportCard = false;
+        return;
+      }
+      console.log('[GradesComponent] Chargement du bulletin - Séquence:', {
+        studentId: this.selectedStudentForReportCard,
+        classRoomId: this.selectedClassroomForReportCard,
+        academicYearId: this.currentAcademicYear.id,
+        sequenceId: this.selectedSequenceForReportCard
+      });
+      loadObservable = this.reportCardService.getReportCardBySequence(
+        this.selectedStudentForReportCard,
+        this.selectedClassroomForReportCard,
+        this.currentAcademicYear.id,
+        this.selectedSequenceForReportCard
+      );
+    }
+
+    loadObservable.subscribe({
+      next: (res) => {
+        console.log('[GradesComponent] Réponse du backend - Bulletin:', res);
+        this.reportCard = res.data || null;
+        console.log('[GradesComponent] Bulletin chargé:', this.reportCard);
+        this.isLoadingReportCard = false;
+        if (this.reportCard) {
+          this.isReportCardModalVisible = true;
+        } else {
+          this.message.warning('Aucun bulletin trouvé');
+        }
+      },
+      error: (err) => {
+        console.error('[GradesComponent] Erreur lors du chargement du bulletin:', err);
+        this.message.error(err?.error?.message || 'Erreur lors du chargement du bulletin');
+        this.isLoadingReportCard = false;
+      }
+    });
+  }
+
+  downloadReportCardPDF(): void {
+    if (!this.reportCard) {
+      this.message.warning('Aucun bulletin à télécharger');
+      return;
+    }
+
+    // Créer une nouvelle fenêtre pour l'impression
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      this.message.error('Impossible d\'ouvrir la fenêtre d\'impression');
+      return;
+    }
+
+    const content = this.generateReportCardHTML();
+    printWindow.document.write(content);
+    printWindow.document.close();
+
+    // Attendre que le contenu soit chargé avant d'imprimer
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  }
+
+  generateReportCardHTML(): string {
+    const card = this.reportCard!;
+    const periodName = card.termName || card.sequenceName || '';
+
+    // Générer le HTML pour chaque matière
+    let gradesHTML = '';
+    if (card.subjectGrades && card.subjectGrades.length > 0) {
+      card.subjectGrades.forEach(subjectGrade => {
+        gradesHTML += `
+        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+          <h3 style="background-color: #f0f0f0; padding: 8px; margin: 10px 0;">${subjectGrade.subjectName} (${subjectGrade.teacherName || 'M/Mme'})</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+            <thead>
+              <tr style="background-color: #e8e8e8;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">COMPÉTENCES ÉVALUÉES</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">N/20</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">M/20</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Coef</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">M×Coef</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">COTE</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">[Min - Max]</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Appréciations</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+        subjectGrade.competences.forEach(competence => {
+          const minMax = (competence.minScore !== undefined && competence.maxScore !== undefined)
+            ? `[${competence.minScore} - ${competence.maxScore}]`
+            : '-';
+          gradesHTML += `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">${competence.competenceDescription || 'N/A'}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${competence.noteN20}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${competence.noteM20}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${competence.coefficient}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${competence.mXCoef}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${competence.cote}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${minMax}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${competence.appreciation || '-'}</td>
+              </tr>
+        `;
+        });
+        gradesHTML += `
+            </tbody>
+          </table>
+          <div style="margin-top: 10px; padding: 8px; background-color: #f9f9f9;">
+            <strong>Matière - TOTAL: ${subjectGrade.totalScore} | MOYENNE: ${subjectGrade.averageScore} | COEF: ${subjectGrade.subjectCoefficient} | MOYENNE × COEF: ${subjectGrade.weightedAverage} | COTE: ${subjectGrade.cote}</strong>
+          </div>
+        </div>
+      `;
+      });
+    }
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Bulletin Scolaire - ${card.studentName}</title>
+        <style>
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+          }
+          .school-info {
+            margin-bottom: 10px;
+          }
+          .student-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+          }
+          .info-section {
+            margin-bottom: 20px;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #e8e8e8;
+            font-weight: bold;
+          }
+          .statistics {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+          }
+          .discipline-record {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff9e6;
+            border: 1px solid #ddd;
+          }
+          .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="school-info">
+            <h1>${card.schoolName || 'École'}</h1>
+            ${card.schoolAddress ? `<p>${card.schoolAddress}</p>` : ''}
+            ${card.schoolPhoneNumber ? `<p>Tél: ${card.schoolPhoneNumber}` : ''}
+            ${card.schoolEmail ? ` | Email: ${card.schoolEmail}</p>` : ''}
+          </div>
+          <h2>BULLETIN SCOLAIRE</h2>
+          <p><strong>${periodName}</strong></p>
+          <p>Année scolaire : ${card.academicYearLabel || card.academicYearId}</p>
+        </div>
+
+        <div class="student-info">
+          <div>
+            <p><strong>Nom et Prénoms de l'élève :</strong> ${card.studentName}</p>
+            ${card.studentUniqueIdentifier ? `<p><strong>Identifiant Unique :</strong> ${card.studentUniqueIdentifier}</p>` : ''}
+            ${card.studentBirthDate ? `<p><strong>Date et lieu de naissance :</strong> ${new Date(card.studentBirthDate).toLocaleDateString('fr-FR')}${card.studentBirthPlace ? ' - ' + card.studentBirthPlace : ''}</p>` : ''}
+            ${card.studentGender ? `<p><strong>Genre :</strong> ${card.studentGender === 'M' ? 'Masculin' : 'Féminin'}</p>` : ''}
+            ${card.parentNames ? `<p><strong>Noms et contacts des Parents / Tuteurs :</strong> ${card.parentNames}${card.parentContacts ? ' - ' + card.parentContacts : ''}</p>` : ''}
+          </div>
+          <div>
+            <p><strong>Classe:</strong> ${card.classRoomLabel || card.classRoomId}</p>
+            ${card.parentNames ? `<p><strong>Parents:</strong> ${card.parentNames}</p>` : ''}
+            ${card.parentContacts ? `<p><strong>Contacts:</strong> ${card.parentContacts}</p>` : ''}
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h2>NOTES</h2>
+          ${gradesHTML}
+        </div>
+
+        <div class="statistics">
+          <h3>Travail de l'élève</h3>
+          <table>
+            <tr>
+              <td><strong>TOTAL GENERAL:</strong></td>
+              <td><strong>${card.totalGeneral || 0}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>COEF:</strong></td>
+              <td><strong>${card.totalCoefficient || 0}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>MOYENNE TRIM:</strong></td>
+              <td><strong>${(card.averageTrim || 0).toFixed(2)} / 20</strong></td>
+            </tr>
+            <tr>
+              <td><strong>COTE:</strong></td>
+              <td><strong>${(card.cote || 0).toFixed(2)} / 20</strong></td>
+            </tr>
+            ${card.totalAbsenceHours !== undefined ? `
+            <tr>
+              <td>Total heures d'absence:</td>
+              <td>${card.totalAbsenceHours}</td>
+            </tr>
+            ` : ''}
+          </table>
+        </div>
+
+        ${card.disciplineRecord ? `
+        <div class="discipline-record">
+          <h3>Record Disciplinaire</h3>
+          <table>
+            <tr>
+              <td>Absences non justifiées (heures):</td>
+              <td>${card.disciplineRecord.unjustifiedAbsencesHours}</td>
+            </tr>
+            <tr>
+              <td>Absences justifiées (heures):</td>
+              <td>${card.disciplineRecord.justifiedAbsencesHours}</td>
+            </tr>
+            <tr>
+              <td>Nombre de retards:</td>
+              <td>${card.disciplineRecord.lateCount}</td>
+            </tr>
+            <tr>
+              <td>Heures de retenue:</td>
+              <td>${card.disciplineRecord.detentionHours}</td>
+            </tr>
+            ${card.disciplineRecord.conductWarning ? '<tr><td colspan="2"><strong>Avertissement de conduite</strong></td></tr>' : ''}
+            ${card.disciplineRecord.conductBlame ? '<tr><td colspan="2"><strong>Blâme</strong></td></tr>' : ''}
+            ${card.disciplineRecord.exclusionDays > 0 ? `<tr><td colspan="2"><strong>Exclusion: ${card.disciplineRecord.exclusionDays} jour(s)</strong></td></tr>` : ''}
+            ${card.disciplineRecord.permanentExclusion ? '<tr><td colspan="2"><strong>Exclusion définitive</strong></td></tr>' : ''}
+          </table>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+          <p>Généré le ${new Date(card.generatedDate).toLocaleDateString('fr-FR')}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  closeReportCardModal(): void {
+    this.isReportCardModalVisible = false;
+  }
+
+  filterStudentOptionForReportCard = (input: string, option: any): boolean => {
+    if (!input) return true;
+    const searchText = input.toLowerCase();
+    return (option.label || '').toLowerCase().includes(searchText);
   }
 }
